@@ -1,4 +1,0 @@
-remezcla
-========
-
-Remezcla Project
