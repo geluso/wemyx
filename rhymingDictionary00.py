@@ -1,7 +1,3 @@
-## This is my first commit.
-
-## This will begin the GitHub version of this project.
-
 
 #!/usr/local/bin/python3.3
 
