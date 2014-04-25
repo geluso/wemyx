@@ -1,4 +1,3 @@
-
 #!/usr/local/bin/python3.3
 
 from string import *
