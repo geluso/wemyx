@@ -1,7 +1,9 @@
- Welcome to the Remezcla project, which basically translates to English as "remix." This is the code I used to create the poetry that I've posted here.
+ Welcome to the Remezcla project.
  
  The basic concept of this software is to read through the text of a target string and to "remix" it into a poetic structure that's based on the target's own lexicon and grammatical form. The user dictates the rhythmic meter and rhyming arrangement of each line upon startup, which allows for such templates as limmericks, sonnets, and many more.
  
  This project is based on the NLTK package for Python 3 (https://github.com/jskda/nltk_data_3). I've mined that data to create the files in this repository that allow for rhyme, meter, and grammar.
+ 
+ "Remezcla" is Spanish for "remix." It's named that way because this project started using the Spanish language. I've only added the English directory here.
  
  I would welcome any suggestions. Have fun looking around.
