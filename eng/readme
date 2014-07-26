@@ -1,1 +1,5 @@
-This is the code to execute. Ensure that you have a source-text you'd like to remix from in the /data/textLibrary directory, otherwise there'll be nothing to utilize. 
+ This is the code to execute. Ensure that you have a source-text you'd like to remix from in the /data/textLibrary directory, otherwise there'll be nothing to utilize. 
+
+ The first time you run this code, it'll have to build the files that contain the text-specific data. Every other time you use the program, it'll load what it has already built.
+ 
+ The present incarnation of this code has timers and exceptions to allow it to keep progressing if there's an unknown error. Natural language will often have nuances that sink this software's comprehension of it. I would like them not to be necessary at some point.
