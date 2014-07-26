@@ -2,6 +2,6 @@
  
  The basic concept of this software is to read through the text of a target string and to "remix" it into a poetic structure that's based on the target's own lexicon and grammatical form. The user dictates the rhythmic meter and rhyming arrangement of each line upon startup, which allows for such templates as limmericks, sonnets, and many more.
  
- For the moment, I don't have the rhyming data that accompanies this code on Github, so the program will fail and stall if you run it. I'm currently between operating systems right now, and am running off of a USB flash drive. Once I revive my machine I'll upload the rest. Also, you will need to have installed all the necessary imports, especially NLTK.
+ This project is based on the NLTK package for Python 3 (https://github.com/jskda/nltk_data_3). I've mined that data to create the files in this repository that allow for rhyme, meter, and grammar.
  
  I would welcome any suggestions. Have fun looking around.
