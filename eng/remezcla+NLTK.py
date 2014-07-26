@@ -1,16 +1,14 @@
   
   # Imports:
-  
 
+  # coding=iso-8859-1
+  
 from string import *
 import csv
 import datetime
 import nltk
-import re
-import sh
 import gloFunk
 import random
-import rhymingDictionaryFinal
 csv.field_size_limit(int(9999999))
 
 
@@ -25,7 +23,7 @@ csv.field_size_limit(int(9999999))
   # Examples are given next to each input for limmericks
   
 empKey = []
-textFile = str(input('Which file to remix? : ')) # superBible
+textFile = str(input('Which file to remix? : ')) # write the name of the file from /textLibrary
 rhymeMap = str(input('Declare rhymeMap : ')) # aabba
 yaFound = []
 for each in rhymeMap:
@@ -1230,6 +1228,7 @@ def runLiner(rhymeMap, empKey, usedList, emps, firstWords, startTimeM, startTime
 print('\nstarting remix')
 
 usedList, lastList, metaBlackList = [], [], []
+rCt = int(0)
 while rCt<poemCt:
     rCt+=1
     print('\n\nPoem #'+str(rCt)+'\n')##+str(datetime.datetime.now())+'\n')
