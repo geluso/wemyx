@@ -18,7 +18,7 @@
 
 from string import *
 from tkinter import *
-import gloFunk as gF
+import ___gloFunk as gF # Make sure to remove underscores later
 import nltk
 from nltk import wordnet as wn
 import random
@@ -60,11 +60,6 @@ nonEnders = ['a', 'A', 'the', 'The', 'or', 'Or', 'and', 'And', 'of', 'Of', 'an',
 ##  indexing, which corresponds to how the main function strings together
 ##  the lines.
 
-print('starting proxBuilds')
-proxP1, proxP2, proxP3, proxP4, proxP5, proxP6, proxP7, proxP8, proxP9, proxP10, proxP11, proxP12, proxP13, proxP14, proxP15, proxP16, proxP17, proxP18, proxP19, proxP20 = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]
-proxM1, proxM2, proxM3, proxM4, proxM5, proxM6, proxM7, proxM8, proxM9, proxM10, proxM11, proxM12, proxM13, proxM14, proxM15, proxM16, proxM17, proxM18, proxM19, proxM20  = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]
-gramProxP1, gramProxP2, gramProxP3, gramProxP4, gramProxP5, gramProxP6, gramProxP7, gramProxP8, gramProxP9, gramProxP10, gramProxP11, gramProxP12, gramProxP13, gramProxP14, gramProxP15, gramProxP16, gramProxP17, gramProxP18, gramProxP19, gramProxP20 = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]
-gramProxM1, gramProxM2, gramProxM3, gramProxM4, gramProxM5, gramProxM6, gramProxM7, gramProxM8, gramProxM9, gramProxM10, gramProxM11, gramProxM12, gramProxM13, gramProxM14, gramProxM15, gramProxM16, gramProxM17, gramProxM18, gramProxM19, gramProxM20  = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]
 
 ##  This program will steadily incorporate the concept of dials, which allows
 ##  the user to create different types of poetry through manipulation of
@@ -174,13 +169,11 @@ def wordWriter(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rh
         
     else: # then we have a bit more work to do...
         # Rebuild flowData here
-        bitBit = 0
-        while bitBit == 0:
+        while len(qLine[1]) > 0:
             try:
                 flowData = flowDataRefresh(qLine[0])
                 rGramLine = nltk.pos_tag(rAllLines) # Check the present line's grammar
                 keepList, gKeepList = proxP1[qLine[1][-1]], gramProxP1[qLine[1][-1]]
-                bitBit = 1
             except KeyError:
                 print(qLine[1], "=KError")
                 qLine[1].pop()
@@ -284,7 +277,13 @@ def wordAdder(pWord, rWord, qLine, pLEmps):
     return pLEmps, qLine, flowData
 
 
-def plainLiner(): # This would build lines not subject to meter and rhyme
+def plainLiner(pLine, pLineLen): # This would build lines not subject to meter and rhyme
+    if len(pLine) == 0:
+        pLine = [firstWords[firstWords.index(random.choice(0, len(firstWords)))]]
+    else:
+        pList = proxP1[pLine[-1]]
+        flowData = flowDataReboot([pLine, pLine])
+    keepList, gKeepList = proxP1[qLine[1][-1]], gramProxP1[qLine[1][-1]]
     print('itIs == itIs') # build this later
 
 
@@ -485,7 +484,16 @@ def startWemyx():
     meterMap, usedList, lastList, metaBlackList = [], [], [], []
     metSwitch, rhySwitch, theSwitch, gramSwitch = meterVar.get(), rhymeVar.get(), thesaVar.get(), grammVar.get()
     proxMinDial, proxMaxDial, punxDial = int(proxMinChoice.get()), int(proxMaxChoice.get()), int(punxChoice.get())
+    print('starting proxBuilds')
+    global proxP1, proxP2, proxP3, proxP4, proxP5, proxP6, proxP7, proxP8, proxP9, proxP10, proxP11, proxP12, proxP13, proxP14, proxP15, proxP16, proxP17, proxP18, proxP19, proxP20
+    global proxM1, proxM2, proxM3, proxM4, proxM5, proxM6, proxM7, proxM8, proxM9, proxM10, proxM11, proxM12, proxM13, proxM14, proxM15, proxM16, proxM17, proxM18, proxM19, proxM20
+    global gramProxP1, gramProxP2, gramProxP3, gramProxP4, gramProxP5, gramProxP6, gramProxP7, gramProxP8, gramProxP9, gramProxP10, gramProxP11, gramProxP12, gramProxP13, gramProxP14, gramProxP15, gramProxP16, gramProxP17, gramProxP18, gramProxP19, gramProxP20
+    global gramProxM1, gramProxM2, gramProxM3, gramProxM4, gramProxM5, gramProxM6, gramProxM7, gramProxM8, gramProxM9, gramProxM10, gramProxM11, gramProxM12, gramProxM13, gramProxM14, gramProxM15, gramProxM16, gramProxM17, gramProxM18, gramProxM19, gramProxM20
     global proxPlusLista, proxMinusLista, gramProxPlusLista, gramProxMinusLista, proxLib, gramProxLib
+    proxP1, proxP2, proxP3, proxP4, proxP5, proxP6, proxP7, proxP8, proxP9, proxP10, proxP11, proxP12, proxP13, proxP14, proxP15, proxP16, proxP17, proxP18, proxP19, proxP20 = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]
+    proxM1, proxM2, proxM3, proxM4, proxM5, proxM6, proxM7, proxM8, proxM9, proxM10, proxM11, proxM12, proxM13, proxM14, proxM15, proxM16, proxM17, proxM18, proxM19, proxM20  = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]
+    gramProxP1, gramProxP2, gramProxP3, gramProxP4, gramProxP5, gramProxP6, gramProxP7, gramProxP8, gramProxP9, gramProxP10, gramProxP11, gramProxP12, gramProxP13, gramProxP14, gramProxP15, gramProxP16, gramProxP17, gramProxP18, gramProxP19, gramProxP20 = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]
+    gramProxM1, gramProxM2, gramProxM3, gramProxM4, gramProxM5, gramProxM6, gramProxM7, gramProxM8, gramProxM9, gramProxM10, gramProxM11, gramProxM12, gramProxM13, gramProxM14, gramProxM15, gramProxM16, gramProxM17, gramProxM18, gramProxM19, gramProxM20  = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]  
     proxPlusLista = [proxP1, proxP2, proxP3, proxP4, proxP5, proxP6, proxP7, proxP8, proxP9, proxP10, proxP11, proxP12, proxP13, proxP14, proxP15, proxP16, proxP17, proxP18, proxP19, proxP20]
     proxMinusLista = [proxM1, proxM2, proxM3, proxM4, proxM5, proxM6, proxM7, proxM8, proxM9, proxM10, proxM11, proxM12, proxM13, proxM14, proxM15, proxM16, proxM17, proxM18, proxM19, proxM20]
     gramProxPlusLista = [gramProxP1, gramProxP2, gramProxP3, gramProxP4, gramProxP5, gramProxP6, gramProxP7, gramProxP8, gramProxP9, gramProxP10, gramProxP11, gramProxP12, gramProxP13, gramProxP14, gramProxP15, gramProxP16, gramProxP17, gramProxP18, gramProxP19, gramProxP20]
@@ -550,6 +558,7 @@ def startWemyx():
         superTokenData = nltk.pos_tag(superTokens)
         superTokenWords, superTokenGrams = [], []
         for each in superTokenData:
+            #print(each)
             superTokenWords.append(each[0])
             superTokenGrams.append(each[1])
         for key, val in supersaurus.items():
@@ -567,7 +576,7 @@ def startWemyx():
         
         gF.dynaDataWriter(dynasaurus, textFile, 'thes')
 
-                
+        
         print('len(superTokenData):', len(superTokenData), '\nlen(superTokenGrams):', len(superTokenGrams), '\n', superTokenData[1000:1200], superTokenGrams[1000:1200], '\ncontinue?')
         for all in range(0, (len(proxPlusLista))):
             proxPlusLista = newProxLibs(proxPlusLista, all, superTokenWords, textFile)
@@ -614,10 +623,10 @@ def startWemyx():
             newFirstFile.write(all+'\n')
         print('writing...', all)
         newFirstFile.close()
-        gF.gpDataWriter([proxPlusLista], superTokens, 'proxP', textFile)
-        gF.gpDataWriter([proxMinusLista], superTokens, 'proxM', textFile)
-        gF.gpDataWriter([gramProxPlusLista], superTokens, 'gramP', textFile)
-        gF.gpDataWriter([gramProxMinusLista], superTokens, 'gramM', textFile)
+        gF.gpDataWriter([proxPlusLista], 'proxP', textFile)
+        gF.gpDataWriter([proxMinusLista], 'proxM', textFile)
+        gF.gpDataWriter([gramProxPlusLista], 'gramP', textFile)
+        gF.gpDataWriter([gramProxMinusLista], 'gramM', textFile)
         gF.dynaDataWriter(dynasaurus, textFile, 'thes')
 
     # This group of numbers will control how the Markov chains are made.
