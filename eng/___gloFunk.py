@@ -148,13 +148,15 @@ def gpDataWriter(allDics, strBit, textFile):
     print('building: data/textLibrary/textData/'+textFile+'-'+strBit+'.csv')
     gpDic = {}
     gpEntr = str()
-    #print(len(allDics))
+    print(len(allDics))
+    #print(allDics[0])
     for dicIndex in range(0, 19):
         if dicIndex == 0:
-            for key, val in allDics[0].items:
+            for key, val in allDics[0].items():
                 for each in val:
                     gpEntr=gpEntr+each+'^'
                 gpDic[key] = gpEntr[:-1]+'~'
+                print(gpEntr)
         else:
             try:
                 for each in allDics[dicIndex]:
@@ -162,7 +164,7 @@ def gpDataWriter(allDics, strBit, textFile):
                         gpEntr = str()
                         for each in val:
                             gpEntr=gpEntr+each+'^'
-                            #print(each)
+                            print("gpEntr:", len(gpEntr))
                         gpDic[key] = gpDic[key]+gpEntr[:-1]+'~'
             except KeyError:
                 print('kE datawriter:', pWord)

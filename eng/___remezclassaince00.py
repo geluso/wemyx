@@ -78,6 +78,31 @@ nonEnders = ['a', 'A', 'the', 'The', 'or', 'Or', 'and', 'And', 'of', 'Of', 'an',
 
 dynasaurus= {}
 
+def gpDataWriter(dicList, fileBit, textFile):
+    pFile = csv.writer(open('data/textLibrary/textData/'+textFile+'-'+fileBit+'.csv', 'w+'))
+    print('building: data/textLibrary/textData/'+textFile+'-'+fileBit+'.csv')
+    print(len(dicList))
+    for key, val in dicList[0].items():
+        #print(key)
+        fullString = str()
+        for each in dicList:
+            #print(len(each))
+            try:
+                dicString = str()
+                for entr in each[key]:
+                    dicString = dicString+entr+'^'
+                fullString = fullString+dicString[:-1]+'~'
+                if dicList.index(each) == 19: # if we're done
+                    #print('hardFinish')
+                    each['thisisadeliberateKeyError']
+            except KeyError:
+                print(fileBit, 'writing:', key, fullString[:min(20, len(fullString))])
+                if len(fullString) > 0:
+                    pFile.writerow([key, fullString[:-1]])
+                fullString = str()
+                continue    
+
+
 def flowDataRefresh(qLine): # Refreshes the prox index list
     pLNi = int(0)
     proxNumList, pLineNList = [], []
@@ -536,6 +561,7 @@ def startWemyx():
     lastSpot, wordsI, click, proxNumerator, proxDicCounter = len(superTokens), int(-1), int(0), int(1), int(0)
 
     try:
+        compFile = open('data/textLibrary/textData/'+textFile+'-compFile.txt', 'r')
         firstFile = open('data/textLibrary/textData/'+textFile+'-firstFile.txt', 'r')
         for line in firstFile:
             firstWords.append(line[:-1])
@@ -623,11 +649,15 @@ def startWemyx():
             newFirstFile.write(all+'\n')
         print('writing...', all)
         newFirstFile.close()
-        gF.gpDataWriter([proxPlusLista], 'proxP', textFile)
-        gF.gpDataWriter([proxMinusLista], 'proxM', textFile)
-        gF.gpDataWriter([gramProxPlusLista], 'gramP', textFile)
-        gF.gpDataWriter([gramProxMinusLista], 'gramM', textFile)
-        gF.dynaDataWriter(dynasaurus, textFile, 'thes')
+        gpDataWriter(proxPlusLista, 'proxP', textFile)
+        gpDataWriter(proxMinusLista, 'proxM', textFile)
+        gpDataWriter(gramProxPlusLista, 'gramP', textFile)
+        gpDataWriter(gramProxMinusLista, 'gramM', textFile)
+        #gF.dynaDataWriter(dynasaurus, textFile, 'thes')
+
+            
+
+    compFile = open('data/textLibrary/textData/'+textFile+'-compFile.txt', 'w+')
 
     # This group of numbers will control how the Markov chains are made.
     # The 'list of lists' strategy allows for a variable length of connectivity
