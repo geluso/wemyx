@@ -96,22 +96,23 @@ def gpDataWriter(dicList, fileBit, textFile):
                     #print('hardFinish')
                     each['thisisadeliberateKeyError']
             except KeyError:
-                print(fileBit, 'writing:', key, fullString[:min(20, len(fullString))])
+                #print(fileBit, 'writing:', key, fullString[:min(20, len(fullString))])
                 if len(fullString) > 0:
                     pFile.writerow([key, fullString[:-1]])
                 fullString = str()
                 continue    
 
 
-def flowDataRefresh(qLine): # Refreshes the prox index list
+def flowDataRefresh(pLine): # Refreshes the prox index list
+    print('flowRefresh', pLine)
     pLNi = int(0)
     proxNumList, pLineNList = [], []
-    while pLNi < len(qLine[0]):
+    while pLNi < len(pLine):
         proxNumList.append(pLNi)
         pLineNList.insert(0, pLNi)
         pLNi+=1
-
-    flowData = proxNumList, pLNi, pLineNList
+    print(proxNumList, pLNi-1, pLineNList)
+    flowData = proxNumList, pLNi-1, pLineNList
     return flowData
 
 
@@ -157,6 +158,13 @@ def fastTracker(expressList, superList):
     return superList
 
 
+def gramLineMaker(xLine):
+    gramLine = []
+    gramTuples = nltk.pos_tag(xLine)
+    for pair in gramTuples:
+        gramLine.append(pair[1])
+    return gramLine
+
 
 def wordWriter(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rhyList, firstWords): #  Uses the pLine data to generate a list of possible words
     print('Entering popListMaker')
@@ -170,12 +178,12 @@ def wordWriter(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rh
         for all in firstWords:
             try:
                 pWord = all.lower()
-                #print('testFirst:', pWord, emps[pWord], '|', empKey[:len(emps[pWord])])
+                print('testFirst:', pWord, emps[pWord], '|', empKey[:len(emps[pWord])])
                 if emps[pWord] == empKey[:len(emps[pWord])]:
                     qPopSuperList[0].append(pWord)
                     qPopSuperList[1].append(pWord)
             except KeyError:
-                #print('kE0 in popList maker = (firstWords):', all)
+                print('kE0 in popList maker = (firstWords):', all)
                 if pWord == firstWords[-1]: # this means we've gotten to the end
                     return qPopSuperList, qLine, flowData
                 else:
@@ -195,54 +203,79 @@ def wordWriter(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rh
     else: # then we have a bit more work to do...
         # Rebuild flowData here
         while len(qLine[1]) > 0:
+            print(qLine[1])
             try:
                 flowData = flowDataRefresh(qLine[0])
-                rGramLine = nltk.pos_tag(rAllLines) # Check the present line's grammar
-                keepList, gKeepList = proxP1[qLine[1][-1]], gramProxP1[qLine[1][-1]]
+                proxNumList, pLNi, pLineNList = flowData
+                rGramLine = gramLineMaker(rAllLines+qLine[1]) # Check the present line's grammar
+                keepList = proxP1[qLine[1][-1]]
+                gKeepList = gramProxP1[rGramLine[-1]]
+                break
             except KeyError:
                 print(qLine[1], "=KError")
+                qLine[0].pop()
                 qLine[1].pop()
-                if len(qLine[1]) != 0:
+                if len(qLine[0]) != 0:
                     continue
                 else:
                     print('crash')
+                    flowData = flowDataRefresh(qLine[0])
+                    proxNumList, pLNi, pLineNList = flowData
                     break            
         for all in proxNumList:
-            proxList = proxLib[all][qLine[pLineNList[pLNi]]]
+            print('proxNumList:', all)
+            print('test:', flowData, qLine[1])
+            print(all+1)
+            print(pLNi+1)
+            proxList = proxPlusLista[all][qLine[1][pLineNList[pLNi]]]
             keepList = proxSorter(proxList, keepList)
-            if gramKill == 0: # gramKill == 0 means we are looking for grammar. gramKill == 1 means we are not.
-                gProxList = gramProxLib[all][rrGramLine[pLineNList[pLNi]]]
+            print('len(proxList)', len(proxList))
+            if gramSwitch == 0: # gramSwitch == 0 means we are looking for grammar. gramSwitch == 1 means we are not.
+                gProxList = gramProxPlusLista[all][rGramLine[pLineNList[pLNi]]]
                 gKeepList = proxSorter(gProxList, gKeepList)
                 killList = []
                 for each in keepList:
                     testLine = []
-                    for each in qLine[1]: # instead of saying testLine = qLine[1], because then they're linked. testLine should change and qLine[1] should stay immutable
-                        testLine.append(each)
-                    gTestLine = nltk.pos_tag(testLine)
-                    if gTestLine[-1] not in gKeepList:
+                    for word in qLine[1]: # instead of saying testLine = qLine[1], because then they're linked. testLine should change and qLine[1] should stay immutable
+                        testLine.append(word)
+                    testLine.append(each)
+                    rGramLine = gramLineMaker(testLine)
+                    if rGramLine[-1] not in gKeepList:  # Send to a separate list to remove. If you remove during this 'for' section, it will index incorrectly
                         killList.append(each)
                 for each in killList:
-                    keepList.remove(each) # this filters against bad grammar choices in our popList
+                    keepList.remove(each) # this filters against bad grammar choices in our popList         
+            print('keepList@:', len(keepList))
             if len(keepList) == 0: # then there are no viable choices
+                qLine = qLine[0][:-1], qLine[1][:-1]
+                flowData = flowDataRefresh(qLine[0])
                 if len(proxNumList) <= min(0,proxMinDial): # see if our chain has reached a minimum.
-                    if gramKill == 0: # then we were looking for grammar.
-                        print('gramKill on')
-                        gramKill == 1 # stop looking for grammar, because it sometimes blocks progress
+                    if gramSwitch == 0: # then we were looking for grammar. 
+                        print(gramSwitch, '| grammar off')
+                        gramSwitch == 1 # stop looking for grammar, because it sometimes blocks progress
                     else: # then we're out of options on proximity alone
                         if allLinesLine[-1] in endPunx: # if its the end of a sentence, we make a special exception, refresh the list with firstWords
+                            print('pointB')
                             return qPopSuperList, qLine, flowData
-                        else:    
+                        else:
+                            print('pointC')
                             qLine = qLine[0][:-1], qLine[1][:-1]
                         if len(qLine[0]) == 0: # then we've cut down to an empty line. Return failData
+                            print('pointD')
                             return qPopSuperList, qLine, flowData
-                else:
+                elif len(qPopSuperList)>0:
+                    while (len(qPopSuperList[0][-1]) == 0) and (len(qPopSuperList[0]) > 0):
+                        qPopSuperList[0], qPopSuperList[1] = qPopSuperList[0][:-1], qPopSuperList[1][:-1]
+                    print('pointA')
                     flowData = proxNumList[1:], pLNi-1, pLineNList[1:]
+                    return qPopSuperList, qLine, flowData
     
             else:
                 pLNi+=1
+                qPopSuperList[0].append(keepList)
+                qPopSuperList[1].append(keepList)
                 return qPopSuperList, qLine, flowData
     # if this fails for some reason, it'll return a blank keepList and print an indicator
-    print('popListMaker failed!')
+    print('wordWriter failed!')
     return qPopSuperList, qLine, flowData
 
 
@@ -307,7 +340,7 @@ def plainLiner(pLine, pLineLen): # This would build lines not subject to meter a
         pLine = [firstWords[firstWords.index(random.choice(0, len(firstWords)))]]
     else:
         pList = proxP1[pLine[-1]]
-        flowData = flowDataReboot([pLine, pLine])
+        flowData = flowDataReboot(pLine)
     keepList, gKeepList = proxP1[qLine[1][-1]], gramProxP1[qLine[1][-1]]
     print('itIs == itIs') # build this later
 
@@ -316,7 +349,7 @@ def poemLiner(empKey, writQLines, rhyList, metSwitch, theSwitch, gramSwitch, fir
 
     writPLines, writRLines = writQLines
     qLine, pAllLines, qAllLines, rAllLines, pLEmps, qPopSuperList = [[],[]], [], [[],[]], [], [], [[],[]]
-    flowData = flowDataRefresh(qLine)
+    flowData = flowDataRefresh(qLine[0])
     proxNumList, pLNi, pLineNList = flowData
     pPopSuperList, rPopSuperList = qPopSuperList
     print('poemLiner begin')
@@ -325,16 +358,18 @@ def poemLiner(empKey, writQLines, rhyList, metSwitch, theSwitch, gramSwitch, fir
         qAllLines = [], [] # rebuild allLines with immutable 'writ' variables and current, evolving pLine and qLine[1]
         if len(writQLines[0]) > 0:
             for all in writQLines[0]:
-                pAllLines.append(all)
+                qAllLines[0].append(all)
         if len(qLine[0]) > 0:
             for all in qLine[0]:
-                pAllLines.append(all)
+                qAllLines[0].append(all)
         if len(writQLines[1]) > 0:
             for all in writQLines[1]:
-                writQLines[1].append(all)
+                qAllLines[1].append(all)
         if len(qLine[1]) > 0:
+            print('rLineLen:', len(qLine[1])) 
             for all in qLine[1]:
-                qLine[1].append(all)
+                print(qLine)
+                qAllLines[1].append(all)
 
         print('qAll:', qAllLines)
 
@@ -368,20 +403,21 @@ def poemLiner(empKey, writQLines, rhyList, metSwitch, theSwitch, gramSwitch, fir
                     pWord = qPopSuperList[0].pop(qPopSuperList[0].index(random.choice(qPopSuperList[0])))
                     qLine[0].append(pWord)
                     qLine[1].append(pWord)
-                print('1')                                        
+                print('point1')                                        
                 qPopSuperList, qLine, flowData = wordWriter(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rhyList, firstWords) # Start with the list of first words
             else:
-                print('2')
+                print('point2')
                 qPopSuperList, qLine, flowData = wordWriter(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rhyList, firstWords)
         else: # If we got at least the first word, automatically continue, looping this function:
             print('pLb')
             qPopSuperList, qLine, flowData = wordWriter(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rhyList, firstWords)
             while len(qPopSuperList[0]) > 0: # keep moving forward as long as we keep getting non-empty lists
                 pWord = qPopSuperList[0].pop(qPopSuperList[0].index(random.choice(qPopSuperList[0])))
+                rWord = qPopSuperList[1].pop(qPopSuperList[1].index(pWord))
                 if qLine[0]+[pWord] not in contrabandLines: # This will screen against trees already explored
-                    pLEmps, qLine, flowData = wordAdder(pWord, qPopSuperList, qLine, pLEmps)
-                    pLEmps, qPopSuperList, qLine, flowData = wordWriter(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rhyList, firstWords)
-            while len(qPopSuperList[0]) == 0: # keep cutting back until you have another list to pop from
+                    pLEmps, qLine, flowData = wordAdder(pWord, rWord, qLine, pLEmps)
+                    qPopSuperList, qLine, flowData = wordWriter(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rhyList, firstWords)
+            while len(qPopSuperList[-1]) == 0: # keep cutting back until you have another list to pop from
                 qPopSuperList, qLine, flowData, contrabandQLines = wordSubtracter(qPopSuperList, qLine, flowData, empsLine, tagEmpsLine, contrabandQLines)
                 qPopSuperList, qLine, flowData = wordWriter(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rhyList, firstWords)
         if len(qLine[0]) == 0:
@@ -508,8 +544,9 @@ def startWemyx():
     rhymeMap=str()
     meterMap, usedList, lastList, metaBlackList = [], [], [], []
     metSwitch, rhySwitch, theSwitch, gramSwitch = meterVar.get(), rhymeVar.get(), thesaVar.get(), grammVar.get()
+    global proxMinDial, proxMaxDial, punxDial
     proxMinDial, proxMaxDial, punxDial = int(proxMinChoice.get()), int(proxMaxChoice.get()), int(punxChoice.get())
-    print('starting proxBuilds')
+    print('starting proxBuilds', gramSwitch)
     global proxP1, proxP2, proxP3, proxP4, proxP5, proxP6, proxP7, proxP8, proxP9, proxP10, proxP11, proxP12, proxP13, proxP14, proxP15, proxP16, proxP17, proxP18, proxP19, proxP20
     global proxM1, proxM2, proxM3, proxM4, proxM5, proxM6, proxM7, proxM8, proxM9, proxM10, proxM11, proxM12, proxM13, proxM14, proxM15, proxM16, proxM17, proxM18, proxM19, proxM20
     global gramProxP1, gramProxP2, gramProxP3, gramProxP4, gramProxP5, gramProxP6, gramProxP7, gramProxP8, gramProxP9, gramProxP10, gramProxP11, gramProxP12, gramProxP13, gramProxP14, gramProxP15, gramProxP16, gramProxP17, gramProxP18, gramProxP19, gramProxP20
