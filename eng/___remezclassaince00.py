@@ -167,7 +167,7 @@ def gramLineMaker(xLine):
 
 
 def wordWriter(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rhyList, firstWords): #  Uses the pLine data to generate a list of possible words
-    print('Entering popListMaker')
+    print('Entering wordWriter')
     qList, keepList = [], [] # Clears the list that we will rebuild
     proxNumList, pLNi, pLineNList = flowData
     pLine, rLine = qLine
@@ -234,14 +234,18 @@ def wordWriter(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rh
                 gProxList = gramProxPlusLista[all][rGramLine[pLineNList[pLNi]]]
                 gKeepList = proxSorter(gProxList, gKeepList)
                 killList = []
+                print('gKeepList:', gKeepList)
                 for each in keepList:
                     testLine = []
                     for word in qLine[1]: # instead of saying testLine = qLine[1], because then they're linked. testLine should change and qLine[1] should stay immutable
                         testLine.append(word)
                     testLine.append(each)
                     rGramLine = gramLineMaker(testLine)
+                    print('testLine:', testLine)
+                    print(rGramLine)
                     if rGramLine[-1] not in gKeepList:  # Send to a separate list to remove. If you remove during this 'for' section, it will index incorrectly
                         killList.append(each)
+                print('killList@:', len(killList))
                 for each in killList:
                     keepList.remove(each) # this filters against bad grammar choices in our popList         
             print('keepList@:', len(keepList))
@@ -285,41 +289,36 @@ def popListDigester(qPopSuperList, qLine, contrabandQLines, firstWords):
     while len(qPopSuperList[0]) > 0: # keep moving forward as long as we keep getting non-empty lists
         pWord = qPopSuperList[0].pop(qPopSuperList[0].index(random.choice(qPopSuperList[0])))
         if pLine+[pWord] not in contrabandLines: # This will screen against trees already explored
-            pLEmps, qLine, flowData = wordAdder(pWord, qPopSuperList, qLine, pLEmps)
+            pLEmps, qLine, flowData, tagEmpsLine = wordAdder(pWord, qPopSuperList, qLine, pLEmps, tagEmpsLine)
             pLEmps, qPopSuperList, qLine, flowData = wordWriter(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rhyList, firstWords)
     while len(qPopSuperList[0]) == 0: # keep cutting back until you have another list to pop from
-        qPopSuperList, qLine, flowData,  contrabandQLines, contrabandRLines = wordSubtracter(qPopSuperList, qLine, flowData, empsLine, tagEmpsLine, contrabandQLines)
+        qPopSuperList, qLine, flowData, pLEmps, tagEmpsLine = wordSubtracter(qLine, qPopSuperList, empsLine, tagEmpsLine, 1)
         qPopSuperList, qLine, flowData = wordWriter(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rhyList, firstWords)
 
     return qPopSuperList, qLine, flowData, contrabandQLines
 
 
-def wordSubtracter(empsLine, tagEmpsLine, subtractThisMany):
+def wordSubtracter(qLine, qPopSuperList, empsLine, tagEmpsLine, minusThis):
 
     # by blacklisting the arrangement of words, we stop the lineBuilder from testing combinations we've already exhausted
-    contrabandQLines = append(pLine)
+    contrabandPLines.append(qLine[0])
+    contrabandQLines.append(qLine)
     contrabandRLines.append(qLine[1])
 
     # take everything back a bit
-    qPopSuperList, qLine = pPopSuperList[:-subtractThisMany], qPopSuperList[1][:-subtractThisMany], pLine[:-subtractThisMany], qLine[1][:-subtractThisMany]
-    flowData = proxNumList[:-subtractThisMany], pLNi-subtractThisMany, pLineNList[subtractThisMany:] 
-    
-    cutCt = int(0)
-    while cutCt < subtractThisMany:
-        testInt, cutPoint = int(0), int(0)
-        while testInt < len(tagEmpsLine):
-            if tagEmpsLine[testInt] not in empsList:
-                cutPoint = testInt
-                print(cutPoint, empPoint)
-            testInt+=1            
-        empsLine = empsLine[:-(len(tagEmpsLine[cutPoint+1:]))]
-        tagEmpsLine = tagEmpsLine[:cutPoint]
-        cutCt+=1
+    qPopSuperList, qLine = pPopSuperList[:-minusThis], qPopSuperList[1][:-minusThis], pLine[:-minusThis], qLine[1][:-minusThis]
+    flowData = flowDataRefresh
 
-    return qPopSuperList, qLine, flowData, empsLine, tagEmpsLine, contrabandQLines
+    tagEmpsLine = tagEmpsLine[:-minusThis]
+    pLEmps = []
+    for tags in tagEmpsLine:
+        for empBits in tags:
+            pLEmps.append(empBits)
+
+    return qLine, qPopSuperList, flowData, pLEmps, tagEmpsLine
 
 
-def wordAdder(pWord, rWord, qLine, pLEmps):
+def wordAdder(pWord, rWord, qLine, pLEmps, tagEmpsLine):
 
     try:
         pWEmps = emps[pWord.lower()]
@@ -329,10 +328,11 @@ def wordAdder(pWord, rWord, qLine, pLEmps):
         except KeyError:
             pWEmps = ['3']
     pLEmps = pLEmps+pWEmps
+    tagEmpsLine.append([pWEmps])
     qLine = qLine[0]+[pWord], qLine[1]+[rWord]
     flowData = flowDataRefresh(qLine[0])
     
-    return pLEmps, qLine, flowData
+    return pLEmps, qLine, flowData, tagEmpsLine
 
 
 def plainLiner(pLine, pLineLen): # This would build lines not subject to meter and rhyme
@@ -348,7 +348,7 @@ def plainLiner(pLine, pLineLen): # This would build lines not subject to meter a
 def poemLiner(empKey, writQLines, rhyList, metSwitch, theSwitch, gramSwitch, firstWords, proxMinDial, proxMaxDial, punxChoice, contrabandLines):
 
     writPLines, writRLines = writQLines
-    qLine, pAllLines, qAllLines, rAllLines, pLEmps, qPopSuperList = [[],[]], [], [[],[]], [], [], [[],[]]
+    qLine, pAllLines, qAllLines, rAllLines, pLEmps, tagEmpsLine, qPopSuperList = [[],[]], [], [[],[]], [], [], [], [[],[]]
     flowData = flowDataRefresh(qLine[0])
     proxNumList, pLNi, pLineNList = flowData
     pPopSuperList, rPopSuperList = qPopSuperList
@@ -415,10 +415,15 @@ def poemLiner(empKey, writQLines, rhyList, metSwitch, theSwitch, gramSwitch, fir
                 pWord = qPopSuperList[0].pop(qPopSuperList[0].index(random.choice(qPopSuperList[0])))
                 rWord = qPopSuperList[1].pop(qPopSuperList[1].index(pWord))
                 if qLine[0]+[pWord] not in contrabandLines: # This will screen against trees already explored
-                    pLEmps, qLine, flowData = wordAdder(pWord, rWord, qLine, pLEmps)
+                    pLEmps, qLine, flowData, tagEmpsLine = wordAdder(pWord, rWord, qLine, pLEmps, tagEmpsLine)
                     qPopSuperList, qLine, flowData = wordWriter(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rhyList, firstWords)
-            while len(qPopSuperList[-1]) == 0: # keep cutting back until you have another list to pop from
-                qPopSuperList, qLine, flowData, contrabandQLines = wordSubtracter(qPopSuperList, qLine, flowData, empsLine, tagEmpsLine, contrabandQLines)
+            while len(qPopSuperList[0][-1]) == 0: # keep cutting back until you have another list to pop from
+                print('wordSubtracter!')
+                numLine = []
+                for nums in qPopSuperList[0]:
+                    numLine.append(len(nums))
+                print(numLine)
+                qLine, qPopSuperList, flowData, pLEmps, tagEmpsLine = wordSubtracter(qLine, qPopSuperList, pLEmps, tagEmpsLine, 1)
                 qPopSuperList, qLine, flowData = wordWriter(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rhyList, firstWords)
         if len(qLine[0]) == 0:
             print('pLc')
@@ -565,6 +570,9 @@ def startWemyx():
     gramProxPlusLista = gramProxPlusLista[:proxMaxDial]
     gramProxMinusLista = gramProxMinusLista[:proxMaxDial]
     proxLib, gramProxLib = [proxPlusLista, proxMinusLista], [gramProxPlusLista, gramProxMinusLista]
+    global contrabandPLines, contrabandQLines, contrabandRLines
+    contrabandPLines, contrabandRLines = [], []
+    contrabandQLines = contrabandPLines, contrabandRLines
     for each in rhyEntries:
         if rhySwitch == 0:
             rhyMore = str(each.get())
