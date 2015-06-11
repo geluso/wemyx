@@ -166,7 +166,7 @@ def gramLineMaker(xLine):
     return gramLine
 
 
-def popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rhyList, firstWords): #  Uses the pLine data to generate a list of possible words
+def popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, rhyList): #  Uses the pLine data to generate a list of possible words
     print('Entering popListMaker')
     qList, keepList = [], [] # Clears the list that we will rebuild
     proxNumList, pLNi, pLineNList = flowData
@@ -174,24 +174,24 @@ def popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, 
     pAllLines, rAllLines = qAllLines
     
     if len(qLine[0]) == 0:
-        qPopSuperList = [], []
+        qPopSuperList = [[], []]
         for all in firstWords:
             try:
                 pWord = all.lower()
                 print('testFirst:', pWord, emps[pWord], '|', empKey[:len(emps[pWord])])
                 if emps[pWord] == empKey[:len(emps[pWord])]:
-                    qPopSuperList[0].append(pWord)
-                    qPopSuperList[1].append(pWord)
+                    qPopSuperList[0][0].append(pWord)
+                    qPopSuperList[1][0].append(pWord)
             except KeyError:
                 print('kE0 in popList maker = (firstWords):', all)
                 if pWord == firstWords[-1]: # this means we've gotten to the end
                     return qPopSuperList, qLine, flowData
                 else:
                     continue
-        if len(qPopSuperList[0]) == 0: # If, for some reason, none of the firstWords fit our rhyme scheme
+        if len(qPopSuperList[0][-1]) == 0: # If, for some reason, none of the firstWords fit our rhyme scheme
             dynaWords, theReverends = dynaMight(wordList, empKey, pLEmps, superTokens, [{}])
             for all in dynaWords:
-                qPopSuperList[0].append(all)
+                qPopSuperList[0][-1].append(all)
         flowData = [0], 0, [0]
         qPopSuperList[0] = fastTracker(rhyList, qPopSuperList[0]) # preferred words to the front of the line, in this case, rhymes. non-rhyming lines will have empty lists
         qPopSuperList[1] = fastTracker(rhyList, qPopSuperList[1])
@@ -268,15 +268,15 @@ def popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, 
                             return qPopSuperList, qLine, flowData
                 elif len(qPopSuperList)>0:
                     while (len(qPopSuperList[0][-1]) == 0) and (len(qPopSuperList[0]) > 0):
-                        qPopSuperList[0], qPopSuperList[1] = qPopSuperList[0][:-1], qPopSuperList[1][:-1]
+                        qPopSuperList[0][-1], qPopSuperList[1][-1] = qPopSuperList[0][-1][:-1], qPopSuperList[1][-1][:-1]
                     print('pointA')
                     flowData = proxNumList[1:], pLNi-1, pLineNList[1:]
                     return qPopSuperList, qLine, flowData
     
             else:
                 pLNi+=1
-                qPopSuperList[0].append(keepList)
-                qPopSuperList[1].append(keepList)
+                qPopSuperList[0][-1].append(keepList)
+                qPopSuperList[1][-1].append(keepList)
                 return qPopSuperList, qLine, flowData
     # if this fails for some reason, it'll return a blank keepList and print an indicator
     print('popListMaker failed!')
@@ -285,22 +285,28 @@ def popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, 
 
 # # #               
 
-def popListDigester(qPopSuperList, qLine, pLEmps, tagEmpsLine, empKey):
-    while len(qPopSuperList[0][-1]) > 0: # keep moving forward as long as we keep getting non-empty lists
-        pWord = qPopSuperList[0].pop(qPopSuperList[0].index(random.choice(qPopSuperList[0])))
+def popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey, rhyList):
+    while len(qPopSuperList[0][-1]) > 0 or len(pLineNList) < proxMinDial: # keep moving forward as long as we keep getting non-empty lists
+        pWord = qPopSuperList[0][-1].pop(qPopSuperList[0][-1].index(random.choice(qPopSuperList[0][-1])))
         if qLine[0]+[pWord] not in contrabandQLines[0]: # This will screen against trees already explored
             pLEmps, qLine, flowData, tagEmpsLine = wordAdder(pWord, qPopSuperList, qLine, pLEmps, tagEmpsLine)
             if pLEmps == empKey[:len(pLEmps)]:
-                pLEmps, qPopSuperList, qLine, flowData = popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rhyList, firstWords)
                 return qPopSuperList, qLine, flowData
-        while len(qPopSuperList[0]) == 0: # keep cutting back until you have another list to pop from
-            qPopSuperList, qLine, flowData, pLEmps, tagEmpsLine = wordSubtracter(qLine, qPopSuperList, empsLine, tagEmpsLine, 1)
+            else:
+                qPopSuperList, qLine, flowData, pLEmps, tagEmpsLine = wordSubtracter(qLine, qPopSuperList, empsLine, tagEmpsLine, 1)
+        if len(qPopSuperList[0][-1]) == 0: # keep cutting back until you have another list to pop from
+            proxNumList, pLineNList = proxNumList[:-1], pLineNList[1:]
+            pLNi-=1
+            if pLineNList <= proxMinDial:
+                everything = reset(everything)
+            
 
     return qPopSuperList, qLine, flowData
 
 
 def wordSubtracter(qLine, qPopSuperList, empsLine, tagEmpsLine, minusThis):
 
+    print('subtract:', qLine[0])
     # by blacklisting the arrangement of words, we stop the lineBuilder from testing combinations we've already exhausted
     contrabandPLines.append(qLine[0])
     contrabandQLines.append(qLine)
@@ -319,8 +325,9 @@ def wordSubtracter(qLine, qPopSuperList, empsLine, tagEmpsLine, minusThis):
     return qLine, qPopSuperList, flowData, pLEmps, tagEmpsLine
 
 
-def wordAdder(pWord, rWord, qLine, pLEmps, tagEmpsLine):
+def wordAdder(pWord, qPopSuperList, qLine, pLEmps, tagEmpsLine):
 
+    print('add:', pWord)
     try:
         pWEmps = emps[pWord.lower()]
     except KeyError:
@@ -330,7 +337,7 @@ def wordAdder(pWord, rWord, qLine, pLEmps, tagEmpsLine):
             pWEmps = ['3']
     pLEmps = pLEmps+pWEmps
     tagEmpsLine.append([pWEmps])
-    qLine = qLine[0]+[pWord], qLine[1]+[rWord]
+    qLine = qLine[0]+[pWord], qLine[1]+[pWord]
     flowData = flowDataRefresh(qLine[0])
     
     return pLEmps, qLine, flowData, tagEmpsLine
@@ -346,7 +353,7 @@ def plainLiner(pLine, pLineLen): # This would build lines not subject to meter a
     print('itIs == itIs') # build this later
 
 
-def poemLiner(empKey, writQLines, rhyList, metSwitch, theSwitch, gramSwitch, firstWords, proxMinDial, proxMaxDial, punxChoice, contrabandLines):
+def poemLiner(empKey, writQLines, rhyList):
 
     writPLines, writRLines = writQLines
     qLine, pAllLines, qAllLines, rAllLines, pLEmps, tagEmpsLine, qPopSuperList = [[],[]], [], [[],[]], [], [], [], [[],[]]
@@ -385,40 +392,40 @@ def poemLiner(empKey, writQLines, rhyList, metSwitch, theSwitch, gramSwitch, fir
                         empLen = len(firstEmps)
                         if empLen <= len(empKey):
                             if (firstEmps == empKey[:empLen]) or (empKey[0] == -1): # Save time and screen against ones that don't fit anyway
-                                qPopSuperList[0].append(pWord)
-                                qPopSuperList[1].append(pWord)
+                                qPopSuperList[0][0].append(pWord)
+                                qPopSuperList[1][0].append(pWord)
                     except KeyError:
                         continue
                 if len(qPopSuperList[0]) == 0:
-                    dynaWords, theReverends = dynaMight(firstWords, empKey, theReverends)
+                    dynaWords, theReverends = dynaMight(empKey, theReverends)
                     if len(dynaWords) == 0:
                         print('not even the dynasaurus can start this.')
                         return []#to a land of pure imagination
                     else: # use the dynaWord on pLine, utilize theReverends to figure which corresponding word goes onto qLine[1]
-                        qLine = qLine[0]+[qPopSuperList[0].pop(qPopSuperList[0].index(random.choice(0,len(qPopSuperList[0]))))], qLine[1]+[qPopSuperList[1].pop(qPopSuperList[1].index(theReverends[0][qLine[0][0]]))] 
+                        qLine = qLine[0]+[qPopSuperList[0][-1].pop(qPopSuperList[0][-1].index(random.choice(0,len(qPopSuperList[0][-1]))))], qLine[1]+[qPopSuperList[1][-1].pop(qPopSuperList[1][-1].index(theReverends[0][qLine[0][0]]))] 
                         theReverends[0].remove(qLine[0][0]) # remove that entry
                     for all in emps[qLine[0][0]]:
                         pLEmps, tagPLEmps = addWordData(qLine[0][0], pLEmps, tagPLEmps)
                 else:
-                    pPSLLen = len(qPopSuperList[0])
-                    pWord = qPopSuperList[0].pop(qPopSuperList[0].index(random.choice(qPopSuperList[0])))
+                    pPSLLen = len(qPopSuperList[0][-1])
+                    pWord = qPopSuperList[0][-1].pop(qPopSuperList[0][-1].index(random.choice(qPopSuperList[0][-1])))
                     qLine[0].append(pWord)
                     qLine[1].append(pWord)
                 print('point1')                                        
-                qPopSuperList, qLine, flowData = popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rhyList, firstWords) # Start with the list of first words
+                qPopSuperList, qLine, flowData = popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey, rhyList)
             else:
                 print('point2')
-                qPopSuperList, qLine, flowData = popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rhyList, firstWords)
+                qPopSuperList, qLine, flowData = popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, rhyList)
         else: # If we got at least the first word, automatically continue, looping this function:
             print('pLb')
-            qPopSuperList, qLine, flowData = popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, gramSwitch, rhyList, firstWords)
-            qPopSuperList, qLine, flowData = popListDigester(qPopSuperList, qLine, pLEmps, tagEmpsLine, empKey)
+            qPopSuperList, qLine, flowData = popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, rhyList)
+            qPopSuperList, qLine, flowData = popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey, rhyList)
         if len(qLine[0]) == 0:
             print('pLc')
             #if (len(proxNumList) < proxMinDial):
                 #if pLine[-1] in endPunx:
             for all in firstWords:
-                qPopSuperList = pPopSuperList+[all], rPopSuperList+[all] # should I keep this here? The p- and r- prefixes are being fazed out
+                qPopSuperList = [[all], [all]] 
                     #allow the program to continue using firstWords as a new starting point. Cut the empKey down to only the remainder of the line.
 ##            else:
 ##                print('pLd')
@@ -453,10 +460,10 @@ def testPoemLine(newPLine, writQLines, writIndex):
     return writQLines, writIndex
 
 
-def stanzaWriter(rhymeMap, meterMap, rhySwitch, metSwitch, theSwitch, gramSwitch, firstWords, usedList, startTimeM, startTimeH, proxMinDial, proxMaxDial, punxChoice, contrabandLines):
+def stanzaWriter(rhymeMap, meterMap, usedList, startTimeM, startTimeH):
     writQLines = [], []
     writIndex = int(0)
-    pPopSuperList, rPopSuperList, contrabandLines = [[]], [[]], [[]]
+    pPopSuperList, rPopSuperList, = [[]], [[]]
     qPopSuperList = [pPopSuperList, rPopSuperList]
     pLine, rLine = [], []
     qLine = [pLine, rLine]
@@ -469,7 +476,7 @@ def stanzaWriter(rhymeMap, meterMap, rhySwitch, metSwitch, theSwitch, gramSwitch
             print('stanzaWriter1')
             if len(writQLines[0]) == 0:
                 print('sWa')
-                newPLine, newRLine = poemLiner(meterMap[0], [[],[]], [], metSwitch, theSwitch, gramSwitch, firstWords, proxMinDial, proxMaxDial, punxChoice, contrabandLines)
+                newPLine, newRLine = poemLiner(meterMap[0], [[],[]], [])
             elif writIndex != rhymeMap.index(rhymeMap[writIndex]): # then the present rhyme token isn't the first in rhymeMap; we need a rhymelist.
                 print('sWb')
                 checkPunx, checkRhy = -1, '.'
@@ -483,15 +490,15 @@ def stanzaWriter(rhymeMap, meterMap, rhySwitch, metSwitch, theSwitch, gramSwitch
                         newPLine = writQLines[0].pop()
                         newRLine = writQLines[1].pop()
                 else:
-                    newPLine, newRLine = poemLiner(meterMap[writIndex], writQLines, rhyWords, metSwtich, theSwitch, gramSwitch, firstWords, proxMinDial, proxMaxDial, punxChoice, contrabandLines) # feed the rhyList and the anteLines into poemLiner, depending on the writIndex count
+                    newPLine, newRLine = poemLiner(meterMap[writIndex], writQLines, rhyWords) # feed the rhyList and the anteLines into poemLiner, depending on the writIndex count
             else: # then we have an unrhyming line that is after another. No rhymes, but anteLines
                 print('sWc')
-                newPLine, newRLine = poemLiner(meterMap[writIndex], writQLines, [], metSwtich, theSwitch, gramSwitch, firstWords, proxMinDial, proxMaxDial, punxChoice, contrabandLines)
+                newPLine, newRLine = poemLiner(meterMap[writIndex], writQLines, [])
             writQLines, writIndex = testPoemLine(newPLine, writQLines, writIndex)
     elif rhySwitch == 1 and metSwitch == 0: # then we have meter but not rhyme
         while len(writQLines[0]) < len(meterMap):
             print('stanzaWriter2')
-            newPLine, newRLine = poemLiner(empKey, writQLines, [], metSwtich, theSwitch, gramSwitch, firstWords, proxMinDial, proxMaxDial, punxChoice, contrabandLines)
+            newPLine, newRLine = poemLiner(empKey, writQLines, [])
             writQLines, writIndex = testPoemLine(newPLine, writQLines, writIndex)
     elif rhySwitch == 0 and metSwitch == 1: # then we have rhyme but not meter
         while len(writQLines[0]) < len(rhymeMap): # do poemLiner with rhymeMap, not empKey. Warning: if emps are different in matched lines, no rhymes will yield.
@@ -500,7 +507,7 @@ def stanzaWriter(rhymeMap, meterMap, rhySwitch, metSwitch, theSwitch, gramSwitch
                 for all in each:
                     all = -1
             rhyWords = gF.rhyDictator(writQLines[0][rhymeMap.index(rhymeMap[writIndex])], 10, 10)
-            newPLine, newRLine = poemLiner(empKey, writQLines, rhyWords, metSwtich, theSwitch, gramSwitch, firstWords, proxMinDial, proxMaxDial, punxChoice, contrabandLines)
+            newPLine, newRLine = poemLiner(empKey, writQLines, rhyWords)
             writQLines, writIndex = testPoemLine(newPLine, writQLines, writIndex)
     else:
         plainLiner() 
@@ -536,6 +543,7 @@ def startWemyx():
     texto = str(open('data/textLibrary/'+textFile+'.txt', 'r', encoding='latin-1').read())
     rhymeMap=str()
     meterMap, usedList, lastList, metaBlackList = [], [], [], []
+    global metSwitch, rhySwitch, theSwitch, gramSwitch
     metSwitch, rhySwitch, theSwitch, gramSwitch = meterVar.get(), rhymeVar.get(), thesaVar.get(), grammVar.get()
     global proxMinDial, proxMaxDial, punxDial
     proxMinDial, proxMaxDial, punxDial = int(proxMinChoice.get()), int(proxMaxChoice.get()), int(punxChoice.get())
@@ -572,7 +580,7 @@ def startWemyx():
         if len(metMore) > 0:
             meterMap.append(metMore)
     
-    print(metSwitch, rhySwitch, rhymeMap, meterMap, proxMinDial, punxDial)
+    print(metSwitch, rhySwitch, gramSwitch, rhymeMap, meterMap, proxMinDial, punxDial)
 
     texto = texto.replace('Mr.', 'Mister')
     texto = texto.replace('Mrs.', 'Missus')
@@ -590,6 +598,7 @@ def startWemyx():
 
     # Now Wemyx fills the empty dictionaries it created
 
+    global firstWords
     firstWords, yaFound, nextSentenceIndexes, theReverends = [], [], [], []
     lastSpot, wordsI, click, proxNumerator, proxDicCounter = len(superTokens), int(-1), int(0), int(1), int(0)
 
@@ -709,8 +718,8 @@ def startWemyx():
             ## A timer is used to restart the process if it stalls on a long loop. It feeds into the stanzaWriter function.
         startTimeM = int(str(datetime.datetime.now())[14:16])
         startTimeH = str(datetime.datetime.now())[11:13]
-        usedList, contrabandLines = [], [[]] # to prevent repeat words
-        usedList = stanzaWriter(rhymeMap, meterMap, rhySwitch, metSwitch, theSwitch, gramSwitch, firstWords, usedList, startTimeM, startTimeH, proxMinDial, proxMaxDial, punxChoice, contrabandLines)
+        usedList = [] # to prevent repeat words
+        usedList = stanzaWriter(rhymeMap, meterMap, usedList, startTimeM, startTimeH)
         if usedListSwitch == 1:
             usedList = ['']
 ##        except:
