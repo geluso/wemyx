@@ -166,33 +166,31 @@ def gramLineMaker(xLine):
     return gramLine
 
 
+def resetEverything():
+    qLine = [[], []]
+    qPopSuperList = [[[]], [[]]]
+    flowData = [], -1, []
+    pLEmps, tagEmpsLine = [], [[]]
+    return qLine, qPopSuperList, flowData, pLEmps, tagEmpsLine
+
+
 def popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, rhyList): #  Uses the pLine data to generate a list of possible words
     print('Entering popListMaker')
     qList, keepList = [], [] # Clears the list that we will rebuild
     proxNumList, pLNi, pLineNList = flowData
     pLine, rLine = qLine
     pAllLines, rAllLines = qAllLines
-    
+    pLEmps, tagEmpsLine = [], []
     if len(qLine[0]) == 0:
-        qPopSuperList = [[], []]
+        qPopSuperList = [[[]], [[]]]
         for all in firstWords:
-            try:
-                pWord = all.lower()
-                print('testFirst:', pWord, emps[pWord], '|', empKey[:len(emps[pWord])])
-                if emps[pWord] == empKey[:len(emps[pWord])]:
-                    qPopSuperList[0][0].append(pWord)
-                    qPopSuperList[1][0].append(pWord)
-            except KeyError:
-                print('kE0 in popList maker = (firstWords):', all)
-                if pWord == firstWords[-1]: # this means we've gotten to the end
-                    return qPopSuperList, qLine, flowData
-                else:
-                    continue
+            qPopSuperList[0][0].append(all.lower())
+            qPopSuperList[1][0].append(all.lower())
+        qPopSuperList, qLine, flowData, pLEmps = popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey, rhyList, flowData)
         if len(qPopSuperList[0][-1]) == 0: # If, for some reason, none of the firstWords fit our rhyme scheme
             dynaWords, theReverends = dynaMight(wordList, empKey, pLEmps, superTokens, [{}])
             for all in dynaWords:
                 qPopSuperList[0][-1].append(all)
-        flowData = [0], 0, [0]
         qPopSuperList[0] = fastTracker(rhyList, qPopSuperList[0]) # preferred words to the front of the line, in this case, rhymes. non-rhyming lines will have empty lists
         qPopSuperList[1] = fastTracker(rhyList, qPopSuperList[1])
         if len(qPopSuperList[0]) == 0:
@@ -250,8 +248,7 @@ def popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, rhyList): # 
                     keepList.remove(each) # this filters against bad grammar choices in our popList         
             print('keepList@:', len(keepList))
             if len(keepList) == 0: # then there are no viable choices
-                qLine = qLine[0][:-1], qLine[1][:-1]
-                flowData = flowDataRefresh(qLine[0])
+                qLine, qPopSuperList, flowData, pLEmps, tagEmpsLine = wordSubtracter(qLine, qPopSuperList, pLEmps, tagEmpsLine, 1)
                 if len(proxNumList) <= min(0,proxMinDial): # see if our chain has reached a minimum.
                     if gramSwitch == 0: # then we were looking for grammar. 
                         print(gramSwitch, '| grammar off')
@@ -286,7 +283,8 @@ def popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, rhyList): # 
 # # #               
 
 def popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey, rhyList, flowData):
-    while (len(qPopSuperList[0][-1]) > 0) and (len(flowData[0]) < proxMinDial or (len(qLine[0]) < proxMinDial)): # keep moving forward as long as we keep getting non-empty lists
+    proxNumList, pLNi, pLineNList = flowData
+    while (len(qPopSuperList[0][-1]) > 0) and ((len(proxNumList) < proxMinDial) or (len(qLine[0]) < proxMinDial)): # keep moving forward as long as we keep getting non-empty lists
         pWord = qPopSuperList[0][-1].pop(qPopSuperList[0][-1].index(random.choice(qPopSuperList[0][-1])))
         print('digest:', pWord)
         if qLine[0]+[pWord] not in contrabandQLines[0]: # This will screen against trees already explored
@@ -299,8 +297,8 @@ def popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey
         if len(qPopSuperList[0]) == 0: # keep cutting back until you have another list to pop from
             proxNumList, pLineNList = proxNumList[:-1], pLineNList[1:]
             pLNi-=1
-            if pLineNList <= proxMinDial:
-                everything = reset(everything)
+            if len(pLineNList) <= proxMinDial:
+                qLine, qPopSuperList, flowData, pLEmps, tagEmpsLine = resetEverything()
             
     print('hit1!', qLine, pLEmps)
     return qPopSuperList, qLine, flowData, pLEmps
@@ -324,7 +322,7 @@ def wordSubtracter(qLine, qPopSuperList, pLEmps, tagEmpsLine, minusThis):
     for tags in tagEmpsLine:
         for empBits in tags:
             pLEmps.append(empBits)
-
+    print('reverted to:', qLine[0])
     return qLine, qPopSuperList, flowData, pLEmps, tagEmpsLine
 
 
@@ -344,7 +342,7 @@ def wordAdder(pWord, qPopSuperList, qLine, pLEmps, tagEmpsLine):
     tagEmpsLine.append([pWEmps])
     qLine = qLine[0]+[pWord], qLine[1]+[pWord]
     flowData = flowDataRefresh(qLine[0])
-    print(pWord, pLEmps)
+    print(pWord, pLEmps, tagEmpsLine)
     
     return pLEmps, qLine, flowData, tagEmpsLine
 
@@ -387,57 +385,9 @@ def poemLiner(empKey, writQLines, rhyList):
         print(qLine, pLEmps)
         print('qAll:', qAllLines)
         print('empKey:', empKey)
-
-        if len(qLine[1]) == 0: # Check to see if we already have the first word:
-            print('pLa', pAllLines)
-            if len(pAllLines) == 0: # If there are no lines yet
-                qPopSuperList = [[]], [[]]
-                for all in firstWords:
-                    pWord = all.lower()
-                    try:
-                        firstEmps = emps[pWord]  # Declare these variables to save time during their repeat use in the next conditionals
-                        empLen = len(firstEmps)
-                        if empLen <= len(empKey):
-                            if (firstEmps == empKey[:empLen]) or (empKey[0] == -1): # Save time and screen against ones that don't fit anyway
-                                qPopSuperList[0][0].append(pWord)
-                                qPopSuperList[1][0].append(pWord)
-                    except KeyError:
-                        continue
-                if len(qPopSuperList[0]) == 0:
-                    print('noFirsts')
-                    dynaWords, theReverends = dynaMight(empKey, theReverends)
-                    if len(dynaWords) == 0:
-                        print('not even the dynasaurus can start this.')
-                        return []#to a land of pure imagination
-                    else: # use the dynaWord on pLine, utilize theReverends to figure which corresponding word goes onto qLine[1]
-                        qLine = qLine[0]+[qPopSuperList[0][-1].pop(qPopSuperList[0][-1].index(random.choice(0,len(qPopSuperList[0][-1]))))], qLine[1]+[qPopSuperList[1][-1].pop(qPopSuperList[1][-1].index(theReverends[0][qLine[0][0]]))] 
-                        theReverends[0].remove(qLine[0][0]) # remove that entry
-                    for all in emps[qLine[0][0]]:
-                        pLEmps, tagPLEmps = addWordData(qLine[0][0], pLEmps, tagPLEmps)
-                else:
-                    print('firstPop:', len(qPopSuperList[0]), '|', len(qPopSuperList[0][0]))
-                    pWord = qPopSuperList[0][0].pop(qPopSuperList[0][0].index(random.choice(qPopSuperList[0][0])))
-                    qLine[0].append(pWord)
-                    qLine[1].append(pWord)
-                print('point1')                                        
-                qPopSuperList, qLine, flowData, pLEmps = popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey, rhyList, flowData)
-            else:
-                print('point2')
-                qPopSuperList, qLine, flowData = popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, rhyList)
-        else: # If we got at least the first word, automatically continue, looping this function:
-            print('pLb')
-            qPopSuperList, qLine, flowData = popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, rhyList)
-            qPopSuperList, qLine, flowData, pLEmps = popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey, rhyList, flowData)
-        if len(qLine[0]) == 0:
-            print('pLc')
-            #if (len(proxNumList) < proxMinDial):
-                #if pLine[-1] in endPunx:
-            for all in firstWords:
-                qPopSuperList = [[all], [all]] 
-                    #allow the program to continue using firstWords as a new starting point. Cut the empKey down to only the remainder of the line.
-##            else:
-##                print('pLd')
-##                return [], [] # no results, go back a line
+        
+        qPopSuperList, qLine, flowData = popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, rhyList)
+        qPopSuperList, qLine, flowData, pLEmps = popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey, rhyList, flowData)
     if (pLEmps != empKey) and (len(pLEmps) != len(empKey)) and ((len(pRhymeList)==0) or (qLine[0][-1] in rhyList)):
         print('pLe')
         return qLine
@@ -874,3 +824,35 @@ for each in 'ADJ', 'ADV', 'NOUN', 'VERB':
         supersaurus[line[0]] = line[1].split('^')
 
 
+
+
+
+
+##                qPopSuperList = [[]], [[]]
+##                for all in firstWords:
+##                    pWord = all.lower()
+##                    try:
+##                        firstEmps = emps[pWord]  # Declare these variables to save time during their repeat use in the next conditionals
+##                        empLen = len(firstEmps)
+##                        if empLen <= len(empKey):
+##                            if (firstEmps == empKey[:empLen]) or (empKey[0] == -1): # Save time and screen against ones that don't fit anyway
+##                                qPopSuperList[0][0].append(pWord)
+##                                qPopSuperList[1][0].append(pWord)
+##                    except KeyError:
+##                        continue
+##                if len(qPopSuperList[0]) == 0:
+##                    print('noFirsts')
+##                    dynaWords, theReverends = dynaMight(empKey, theReverends)
+##                    if len(dynaWords) == 0:
+##                        print('not even the dynasaurus can start this.')
+##                        return []#to a land of pure imagination
+##                    else: # use the dynaWord on pLine, utilize theReverends to figure which corresponding word goes onto qLine[1]
+##                        qLine = qLine[0]+[qPopSuperList[0][-1].pop(qPopSuperList[0][-1].index(random.choice(0,len(qPopSuperList[0][-1]))))], qLine[1]+[qPopSuperList[1][-1].pop(qPopSuperList[1][-1].index(theReverends[0][qLine[0][0]]))] 
+##                        theReverends[0].remove(qLine[0][0]) # remove that entry
+##                    for all in emps[qLine[0][0]]:
+##                        pLEmps, tagPLEmps = addWordData(qLine[0][0], pLEmps, tagPLEmps)
+##                else:
+##                    print('firstPop:', len(qPopSuperList[0]), '|', len(qPopSuperList[0][0]))
+##                    pWord = qPopSuperList[0][0].pop(qPopSuperList[0][0].index(random.choice(qPopSuperList[0][0])))
+##                    qLine[0].append(pWord)
+##                    qLine[1].append(pWord)
