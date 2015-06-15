@@ -180,19 +180,20 @@ def popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, rhyList): # 
     proxNumList, pLNi, pLineNList = flowData
     pLine, rLine = qLine
     pAllLines, rAllLines = qAllLines
-    pLEmps, tagEmpsLine = [], []
+    pLEmps, tagEmpsLine = [], [[]]
     if len(qLine[0]) == 0:
         qPopSuperList = [[[]], [[]]]
         for all in firstWords:
             qPopSuperList[0][0].append(all.lower())
             qPopSuperList[1][0].append(all.lower())
-        qPopSuperList, qLine, flowData, pLEmps = popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey, rhyList, flowData)
+        #qPopSuperList, qLine, flowData, pLEmps, tagEmpsLine =  = popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey, rhyList, flowData)
         if len(qPopSuperList[0][-1]) == 0: # If, for some reason, none of the firstWords fit our rhyme scheme
             dynaWords, theReverends = dynaMight(wordList, empKey, pLEmps, superTokens, [{}])
             for all in dynaWords:
                 qPopSuperList[0][-1].append(all)
-        qPopSuperList[0] = fastTracker(rhyList, qPopSuperList[0]) # preferred words to the front of the line, in this case, rhymes. non-rhyming lines will have empty lists
-        qPopSuperList[1] = fastTracker(rhyList, qPopSuperList[1])
+        else:
+            qPopSuperList[0][-1] = fastTracker(rhyList, qPopSuperList[0][-1]) # preferred words to the front of the line, in this case, rhymes. non-rhyming lines will have empty lists
+            qPopSuperList[1][-1] = fastTracker(rhyList, qPopSuperList[1][-1])
         if len(qPopSuperList[0]) == 0:
             print('tried everything, nothing started')
         return qPopSuperList, qLine, flowData
@@ -249,7 +250,8 @@ def popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, rhyList): # 
             print('keepList@:', len(keepList))
             if len(keepList) == 0: # then there are no viable choices
                 qLine, qPopSuperList, flowData, pLEmps, tagEmpsLine = wordSubtracter(qLine, qPopSuperList, pLEmps, tagEmpsLine, 1)
-                if len(proxNumList) <= min(0,proxMinDial): # see if our chain has reached a minimum.
+                return qPopSuperList, qLine, flowData
+                if len(proxNumList) < proxMinDial: # see if our chain has reached a minimum.
                     if gramSwitch == 0: # then we were looking for grammar. 
                         print(gramSwitch, '| grammar off')
                         gramSwitch == 1 # stop looking for grammar, because it sometimes blocks progress
@@ -259,11 +261,12 @@ def popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, rhyList): # 
                             return qPopSuperList, qLine, flowData
                         else:
                             print('pointC')
-                            qLine = qLine[0][:-1], qLine[1][:-1]
+                            qLine, qPopSuperList, flowData, pLEmps, tagEmpsLine = wordSubtracter(qLine, qPopSuperList, pLEmps, tagEmpsLine, 1)
+                            return qPopSuperList, qLine, flowData
                         if len(qLine[0]) == 0: # then we've cut down to an empty line. Return failData
                             print('pointD')
                             return qPopSuperList, qLine, flowData
-                elif len(qPopSuperList)>0:
+                elif len(qPopSuperList[0])>0:
                     while (len(qPopSuperList[0][-1]) == 0) and (len(qPopSuperList[0]) > 0):
                         qPopSuperList[0][-1], qPopSuperList[1][-1] = qPopSuperList[0][-1][:-1], qPopSuperList[1][-1][:-1]
                     print('pointA')
@@ -272,8 +275,8 @@ def popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, rhyList): # 
     
             else:
                 pLNi+=1
-                qPopSuperList[0][-1].append(keepList)
-                qPopSuperList[1][-1].append(keepList)
+                qPopSuperList[0].append(keepList)
+                qPopSuperList[1].append(keepList)
                 return qPopSuperList, qLine, flowData
     # if this fails for some reason, it'll return a blank keepList and print an indicator
     print('popListMaker failed!')
@@ -284,24 +287,25 @@ def popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, rhyList): # 
 
 def popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey, rhyList, flowData):
     proxNumList, pLNi, pLineNList = flowData
-    while (len(qPopSuperList[0][-1]) > 0) and ((len(proxNumList) < proxMinDial) or (len(qLine[0]) < proxMinDial)): # keep moving forward as long as we keep getting non-empty lists
+    while (len(qPopSuperList[0][-1]) > 0) and ((len(proxNumList) >= proxMinDial) or (len(qLine[0]) < proxMinDial)): # keep moving forward as long as we keep getting non-empty lists
         pWord = qPopSuperList[0][-1].pop(qPopSuperList[0][-1].index(random.choice(qPopSuperList[0][-1])))
-        print('digest:', pWord)
+        print('digest:', pWord, '/', len(qPopSuperList[0][-1]))
         if qLine[0]+[pWord] not in contrabandQLines[0]: # This will screen against trees already explored
             pLEmps, qLine, flowData, tagEmpsLine = wordAdder(pWord, qPopSuperList, qLine, pLEmps, tagEmpsLine)
             if pLEmps == empKey[:len(pLEmps)]:
                 print('hit0!', qLine, pLEmps)
-                return qPopSuperList, qLine, flowData, pLEmps
+                return qPopSuperList, qLine, flowData, pLEmps, tagEmpsLine
             else:
-                qPopSuperList, qLine, flowData, pLEmps, tagEmpsLine = wordSubtracter(qLine, qPopSuperList, pLEmps, tagEmpsLine, 1)
-        if len(qPopSuperList[0]) == 0: # keep cutting back until you have another list to pop from
-            proxNumList, pLineNList = proxNumList[:-1], pLineNList[1:]
-            pLNi-=1
-            if len(pLineNList) <= proxMinDial:
-                qLine, qPopSuperList, flowData, pLEmps, tagEmpsLine = resetEverything()
-            
+                qLine, qPopSuperList, flowData, pLEmps, tagEmpsLine = wordSubtracter(qLine, qPopSuperList, pLEmps, tagEmpsLine, 1)
+                print('A: pxNumList:', len(proxNumList), '>', proxMinDial, '|or| qLineLen:', len(qLine[0]), '<', proxMinDial)
+                print('qPoppa1:', len(qPopSuperList[0]), len(qPopSuperList[0][-1]))
+        if (len(pLineNList) < proxMinDial) and (len(qLine) > proxMinDial):
+            qLine, qPopSuperList, flowData, pLEmps, tagEmpsLine = resetEverything()
+            return qPopSuperList, qLine, flowData, pLEmps, tagEmpsLine
     print('hit1!', qLine, pLEmps)
-    return qPopSuperList, qLine, flowData, pLEmps
+    print('pxNumList:', len(proxNumList), '>', proxMinDial, '|or| qLineLen:', len(qLine[0]), '<', proxMinDial)
+    print('qPoppa1:', len(qPopSuperList[0]), len(qPopSuperList[0][-1]))
+    return qPopSuperList, qLine, flowData, pLEmps, tagEmpsLine
 
 
 def wordSubtracter(qLine, qPopSuperList, pLEmps, tagEmpsLine, minusThis):
@@ -313,16 +317,20 @@ def wordSubtracter(qLine, qPopSuperList, pLEmps, tagEmpsLine, minusThis):
     contrabandQLines = contrabandPLines, contrabandRLines
 
     # take everything back a bit
-    qPopSuperList = qPopSuperList[0][:-minusThis], qPopSuperList[1][:-minusThis]
     qLine = qLine[0][:-minusThis], qLine[1][:-minusThis]
-    flowData = flowDataRefresh
-
+    if len(qPopSuperList[0]) > (len(qLine) + minusThis):
+        qPopSuperList = qPopSuperList[0][:-(minusThis+1)], qPopSuperList[1][:-(minusThis+1)]
+    flowData = flowDataRefresh(qLine[0])
+    proxNumList, pLNi, pLineNList = flowData
     tagEmpsLine = tagEmpsLine[:-minusThis]
     pLEmps = []
-    for tags in tagEmpsLine:
-        for empBits in tags:
-            pLEmps.append(empBits)
-    print('reverted to:', qLine[0])
+    for all in tagEmpsLine:
+        print('tEL0:', all)
+        for each in all:
+            print('tEL1:', each)
+            pLEmps.append(each)
+        
+    print('reverted to:', qLine[0], pLEmps, tagEmpsLine, '/n', len(qPopSuperList[0]), len(qPopSuperList[0][-1]))
     return qLine, qPopSuperList, flowData, pLEmps, tagEmpsLine
 
 
@@ -339,9 +347,10 @@ def wordAdder(pWord, qPopSuperList, qLine, pLEmps, tagEmpsLine):
             print('kefucka1:', pWord)
             pWEmps = ['3']
     pLEmps = pLEmps+pWEmps
-    tagEmpsLine.append([pWEmps])
+    tagEmpsLine.append(pWEmps)
     qLine = qLine[0]+[pWord], qLine[1]+[pWord]
     flowData = flowDataRefresh(qLine[0])
+    proxNumList, pLNi, pLineNList = flowData
     print(pWord, pLEmps, tagEmpsLine)
     
     return pLEmps, qLine, flowData, tagEmpsLine
@@ -353,6 +362,7 @@ def plainLiner(pLine, pLineLen): # This would build lines not subject to meter a
     else:
         pList = proxP1[pLine[-1]]
         flowData = flowDataReboot(pLine)
+        proxNumList, pLNi, pLineNList = flowData
     keepList, gKeepList = proxP1[qLine[1][-1]], gramProxP1[qLine[1][-1]]
     print('itIs == itIs') # build this later
 
@@ -360,7 +370,7 @@ def plainLiner(pLine, pLineLen): # This would build lines not subject to meter a
 def poemLiner(empKey, writQLines, rhyList):
 
     writPLines, writRLines = writQLines
-    qLine, pAllLines, qAllLines, rAllLines, pLEmps, tagEmpsLine, qPopSuperList = [[],[]], [], [[],[]], [], [], [], [[[]],[[]]]
+    qLine, pAllLines, qAllLines, rAllLines, pLEmps, tagEmpsLine, qPopSuperList = [[],[]], [], [[],[]], [], [], [], [[[]], [[]]]
     flowData = flowDataRefresh(qLine[0])
     proxNumList, pLNi, pLineNList = flowData
     pPopSuperList, rPopSuperList = qPopSuperList
@@ -387,7 +397,7 @@ def poemLiner(empKey, writQLines, rhyList):
         print('empKey:', empKey)
         
         qPopSuperList, qLine, flowData = popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, rhyList)
-        qPopSuperList, qLine, flowData, pLEmps = popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey, rhyList, flowData)
+        qPopSuperList, qLine, flowData, pLEmps, tagEmpsLine =  popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey, rhyList, flowData)
     if (pLEmps != empKey) and (len(pLEmps) != len(empKey)) and ((len(pRhymeList)==0) or (qLine[0][-1] in rhyList)):
         print('pLe')
         return qLine
