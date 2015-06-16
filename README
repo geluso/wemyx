@@ -1,13 +1,17 @@
- Welcome to the Remezcla project.
+ Welcome to the Remezcla/Wemyx project.
+ 
+  "Remezcla" is Spanish for "remix." It's named that way because this project started using the Spanish language. In English, I call the project "Wemyx." 
  
  The basic concept of this software is to read through the text of a target string and to "remix" it into a poetic structure that's based on the target's own lexicon and grammatical form. The user dictates the rhythmic meter and rhyming arrangement of each line upon startup, which allows for such templates as limmericks, sonnets, and many more.
  
- This project is based on the NLTK package for Python 3 (https://github.com/jskda/nltk_data_3). I've mined that data to create the files in this repository that allow for rhyme, meter, and grammar.
+ This project is based on the NLTK package for Python 3 (https://github.com/jskda/nltk_data_3). I've mined that data to create the files in this repository that allow for rhyme, meter, and grammar. The Spanish version has no NLTK add-ons because the orthography contains all the phonetic information needed, aside from a few exceptions, and the data for the entire language can be created with any exhaustive list of Spanish words. 
  
- "Remezcla" is Spanish for "remix." It's named that way because this project started using the Spanish language. I've only added the English directory here.
+ Presently, this page hosts two versions of the code. The files without leading underscores are the last successful builds. The ones with leading underscores are the files in development, and will likely not work correctly when ran. I've tried to comment within the code to facilitate contributions and suggestions.
+
+ This repository hosts the most recent additions to the code. Whenever changes are made, they are uploaded here thereafter. In addition to being a work-in-progress, I've never read a style guide, so if you're frustrated by my formatting and it actually hinders comprehension, then say something. I know y'all like your Pep8 but unless someone's cutting me a check then my entire focus is making the code operable, not pretty. However, operable != comprehensible to you. 
  
- I would welcome any suggestions. Have fun looking around.
+ As with any endeavor, it's best to know what your goal is before you can reach it. The intent of this project is not to create one type of computer-generated poetry, but to install tools and switches, like an electronic musician's switchboard, that can be adjusted by the user for their own effects. Despite the installation of grammar tools, there's no particular standard of grammar that this software adheres to. Rather, it imitates what it reads, and humans don't always do the good grammar good. I dismiss these issues by invoking licentia poetica. There's no ideal format to achieve. There's only the expansion of capabilities.
  
- MOST RECENT EDIT:
+ Feedback is welcome and appreciated.
  
- -improved the gramLibs, still under construction
+ 20150616065954
