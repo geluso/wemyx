@@ -1,0 +1,9 @@
+ Este carpeta contiene el co`digo para la versio`n espan~ola, que se llama "remezcla" o "remezclemos" en este lenguaje (depende cuantas personas la utilizan).  En ingles, se llama "Wemyx," una palabra inventado que significa "remezclemos" mas o menos.  
+ 
+ Porque ingles es mi idioma pricipia, no he trabajado en este lenguaje muy duro. Pero, la version espanola fue actualizado por mi antes de la version ingles. Como esta escrito, el lenguaje espanol tiene mas informacion sobre la pronuncion. Por eso, no tiene las herramientas del NLTK como ingles.
+ 
+ Tambien, este carpeta tiene el codigo para el diccionario de rimas. En el pasado, este diccionario estuvo disponible por internet, pero no habia trafico por la pagina, y no queria seguir pagando para nadie. Si tiene interes, hay codigo de PHP y otros que ya esta escrito.
+ 
+ Voy a continuar en la carpeta ingles. 
+ 
+ For those of you who don't speak Spanish, this is the Spanish code for the Wemyx project. Obviously, different languages are handled differently, but the intent is to have dissimilar language transliterated to similar data. This code brings us to the point where we could implement a working version of the English code with the Spanish data. This section hasn't been given as much attention as the English version, so my apologies. 
