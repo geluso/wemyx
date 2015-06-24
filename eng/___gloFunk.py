@@ -329,15 +329,24 @@ def dataFileOpener(proxLista, libInt, strBit, textFile):
         
 
 def lineToString(pLine):
-    pLine = pLine
+    pString = str()
+    for each in pLine:
+        pString+=str(each)+' '
+    for each in silentPunx:
+        if each in pString:
+            pString.replace(' '+each, each)
+    print('line2Str:', pString)
+    return pString
     
 def stringToLine(pString):
-    for all in allPunx:
+    for all in silentPunx:
         if all in pString:
             pString = pString.replace(all, ' '+all)
     pLine = pString.split(' ')
     while '' in pLine:
         pLine.remove('')
+    print('str2Line:', pLine)
+    return pLine
 
 
 #####
