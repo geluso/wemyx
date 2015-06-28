@@ -355,11 +355,11 @@ def stringToLine(pString):
 ## Can this be used to find a range of totalVs and rSyls?
 
 
-def rhyDictator(pWord, maxTotalVs, rSyls): # Find rhymes of a particular word
-    matchBox = []
-    finalRhys= []
+def rhyDictator(superTokens, pWord, maxTotalVs, maxRSyls): # Find rhymes of a particular word
+    matchBox, finalRhys = [], []
+    totalVs, rSyls = int(1), int(1)
     while totalVs < maxTotalVs:
-        if (rSyls <= totalVs):
+        while (rSyls <= totalVs):
             tName, rName = str(totalVs), str(rSyls)
             if totalVs < 10:
                 tName = '0'+tName
@@ -393,7 +393,9 @@ def rhyDictator(pWord, maxTotalVs, rSyls): # Find rhymes of a particular word
                         finalRhys.append(all)
             except IOError:
                 return []
+            rSyls+=1
         totalVs+=1
+        rSyls = int(1)
     finalRhys.sort()
     return finalRhys
 

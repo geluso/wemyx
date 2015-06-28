@@ -149,12 +149,12 @@ def proxSorter(testList, keepList):
 def fastTracker(expressList, superList):
     swapList = []
     for all in expressList:
-        if all in superList[-1]:
+        if all in superList:
             swapList.append(all)
         else:
-            superList[-1].insert(0, all)
+            superList.insert(0, all)
     for all in swapList:
-        superList[-1].insert(0, superList[-1].pop(superList[-1].index(all)))
+        superList.insert(0, superList.pop(superList.index(all)))
     return superList
 
 
@@ -182,7 +182,7 @@ def popListMaker(empKey, qAllLines, qLine, qPopSuperList, flowData, rhyList, pLE
     proxNumList, pLNi, pLineNList = flowData
     pLine, rLine = qLine
     pAllLines, rAllLines = qAllLines
-##    if len(pAllLines) > 0: # if we have an anteLine, then we'll just plug it in as if it were the whole line
+##    if len(pAllLines) > 0 and len(: # if we have an anteLine, then we'll just plug it in as if it were the whole line
 ##        for all in pAllLines:
 ##            qLine[0].append(all)
 ##        for all in rAllLines:
@@ -480,13 +480,17 @@ def stanzaWriter(rhymeMap, meterMap, usedList, startTimeM, startTimeH):
                 while checkRhy in endPunx:
                     checkRhy = writQLines[0][rhymeMap.index(rhymeMap[writIndex])][checkPunx]
                     checkPunx-=1
-                rhyWords = gF.rhyDictator(checkRhy, 10, 10) # Submit these as lists, it'll enable ranges of values!
+                rhyWords = gF.rhyDictator(superTokens, checkRhy, 10, 10) # Submit these as lists, it'll enable ranges of values!
                 if len(rhyWords) == 0: # then we didn't find any rhymes for that line. We cut all the way back.
-                    writQLines = writQLines[0][:rhymeMap.index(rhymeMap[writIndex])], writQLines[1][:rhymeMap.index(rhymeMap[writIndex])]
+                    print('noRhys')
+                    writQLines = writQLines[0][:(rhymeMap[:-1].rindex(rhymeMap[writIndex]))-1], writQLines[1][:(rhymeMap[:-1].rindex(rhymeMap[writIndex]))-1]
                     if len(writQLines[0]) > 0: # then we're going to give the last lines as our pLine and qLine[1], so testPoemLiner doesn't cut one off by accident. If there are no lines, no bother.
+                        print('popWrits')
                         newPLine = writQLines[0].pop()
                         newRLine = writQLines[1].pop()
                 else:
+                    print('swb gogo')
+                    print(rhyWords)
                     newQLine = poemLiner(meterMap[writIndex], writQLines, rhyWords) # feed the rhyList and the anteLines into poemLiner, depending on the writIndex count
             else: # then we have an unrhyming line that is after another. No rhymes, but anteLines
                 print('sWc')
@@ -589,6 +593,7 @@ def startWemyx():
         texto = texto.replace(all, ' '+all)
     for all in badGrams:
         texto = texto.replace(all, '')
+    global superTokens
     superTokens = nltk.word_tokenize(texto)
 
     ##  This part loads data that allows the computer to read meter, phonetics,
