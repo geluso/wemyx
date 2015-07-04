@@ -361,6 +361,7 @@ def rhyDictator(superTokens, pWord, maxTotalVs, maxRSyls): # Find rhymes of a pa
     while totalVs < maxTotalVs:
         while (rSyls <= totalVs):
             tName, rName = str(totalVs), str(rSyls)
+            print('gF.rhy:', pWord, str(totalVs), str(rSyls))
             if totalVs < 10:
                 tName = '0'+tName
             if rSyls < 10:
@@ -397,6 +398,7 @@ def rhyDictator(superTokens, pWord, maxTotalVs, maxRSyls): # Find rhymes of a pa
         totalVs+=1
         rSyls = int(1)
     finalRhys.sort()
+    print('gF.rhys:', len(finalRhys))
     return finalRhys
 
 
