@@ -335,7 +335,7 @@ def lineToString(pLine):
     for each in silentPunx:
         if each in pString:
             pString.replace(' '+each, each)
-    print('line2Str:', pString)
+   #$ print('line2Str:', pString)
     return pString
     
 def stringToLine(pString):
@@ -345,7 +345,7 @@ def stringToLine(pString):
     pLine = pString.split(' ')
     while '' in pLine:
         pLine.remove('')
-    print('str2Line:', pLine)
+   #$ print('str2Line:', pLine)
     return pLine
 
 
@@ -361,7 +361,7 @@ def rhyDictator(superTokens, pWord, maxTotalVs, maxRSyls): # Find rhymes of a pa
     while totalVs < maxTotalVs:
         while (rSyls <= totalVs):
             tName, rName = str(totalVs), str(rSyls)
-            print('gF.rhy:', pWord, str(totalVs), str(rSyls))
+           #$ print('gF.rhy:', pWord, str(totalVs), str(rSyls))
             if totalVs < 10:
                 tName = '0'+tName
             if rSyls < 10:
@@ -398,7 +398,7 @@ def rhyDictator(superTokens, pWord, maxTotalVs, maxRSyls): # Find rhymes of a pa
         totalVs+=1
         rSyls = int(1)
     finalRhys.sort()
-    print('gF.rhys:', len(finalRhys))
+   #$ print('gF.rhys:', len(finalRhys))
     return finalRhys
 
 
