@@ -346,10 +346,13 @@ def popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey
             qLine, qPopSuperList, qAllLines, flowData, pLEmps, tagEmpsLine, contrabandQLines = wordSubtracter(qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine, 1, contrabandQLines)
             #$print('B: pxNumList:', len(proxNumList), '>', proxMinDial, '|or| qLineLen:', len(qLine[0]), '<', proxMinDial)
             #$print('qPoppa0:', len(qPopSuperList[0]), len(qPopSuperList[0][-1]))
-            if len(qAllLines[0]) > 0:
-                #$print('leftTrim')
-                qAllLines[0].pop(0)
-                qAllLines[1].pop(0)
+            if len(qLine[0]) == proxMinDial and len(qAllLines[0]) == 0:
+                contrabandQLines = contrabandQLines[0]+[qLine[0]], contrabandQLines[1]+[qLine[1]]
+                conNum = int(0)
+                for each in supContraLines:
+                    conNum+=1
+                    print('contra:', conNum, len(each[0]), len(each[1]))
+                    print('addQ:', qLine[0], len(contrabandQLines[0]), len(contrabandQLines[1]))
     #$print('hit1!', qLine, pLEmps)
     #$print('pxNumList:', len(proxNumList), '>', proxMinDial, '|or| qLineLen:', len(qLine[0]), '<', proxMinDial)
     #$print('qPoppa1:', len(qPopSuperList[0]), len(qPopSuperList[0][-1]))
@@ -361,10 +364,6 @@ def wordSubtracter(qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine, minusTh
 
     #$print('subtract:', qLine[0], pLEmps, tagEmpsLine)
     # by blacklisting the arrangement of words, we stop the lineBuilder from testing combinations we've already exhausted
-    contrabandQLines = contrabandQLines[0]+[qLine[0]], contrabandQLines[1]+[qLine[1]]
-    supContraLines[-1].append(contrabandQLines)
-    print('len(contraband):', len(supContraLines), len(contrabandQLines[0]), len(contrabandQLines[1]))
-    popCt = int(0)
 
     # take everything back a bit
     #$print(qAllLines)
@@ -373,6 +372,10 @@ def wordSubtracter(qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine, minusTh
         qAllLines[0].pop(0) 
         qAllLines[1].pop(0)
     else:
+##        if len(qLine) == proxMinDial:
+##            contrabandQLines = contrabandQLines[0]+[qLine[0]], contrabandQLines[1]+[qLine[1]]
+##            supContraLines[-1].append(contrabandQLines)
+##            print('len(contraband):', len(supContraLines), len(contrabandQLines[0]), len(contrabandQLines[1]))
         qLine = qLine[0][:-minusThis], qLine[1][:-minusThis]
     qPopSuperList = qPopSuperList[0][:(len(qLine[0])+1)], qPopSuperList[1][:(len(qLine[1])+1)]
     tagEmpsLine = tagEmpsLine[:-minusThis]
@@ -384,7 +387,6 @@ def wordSubtracter(qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine, minusTh
         for each in all:
             #print('tEL1:', each)
             pLEmps.append(each)
-        
     #$print('reverted to:', qLine[0], pLEmps, tagEmpsLine, '\n', len(qPopSuperList[0]), len(qPopSuperList[0][-1]))
     return qLine, qPopSuperList, qAllLines, flowData, pLEmps, tagEmpsLine, contrabandQLines
 
@@ -459,7 +461,7 @@ def poemLiner(empKey, writQLines, rhyList, contrabandQLines):
         #$print('breakpointA')
         contrabandPLines, contrabandRLines = [], []
         contrabandQLines = contrabandPLines, contrabandRLines
-        return qLine
+        return qLine, contrabandQLines
     elif (pLEmps != empKey) and (len(pLEmps) != len(empKey)) and (qLine[0][-1] not in rhyList) and (len(pRhymeList) > 0): #
         pLEmps = pLEmps[:-(len(emps[qLine[1].pop()]))] # One line removes the word from the qLine[1] and the emps of pLine
         #$print('shouldnt happen')
@@ -467,25 +469,21 @@ def poemLiner(empKey, writQLines, rhyList, contrabandQLines):
             result = lineAdvancer(popList, empKey)
             contrabandPLines, contrabandRLines = [], []
             contrabandQLines = contrabandPLines, contrabandRLines
-            return qLine
+            return qLine, contrabandQLines
         else:
             #$print('breakpointB')
-            contrabandPLines, contrabandRLines = [], []
-            contrabandQLines = contrabandPLines, contrabandRLines
-            return [], []
+            return qLine, contrabandQLines
     else:
         #$print('\n\nsuccess!\n', qLine[0], pLEmps)
 ##        while len(qAllLines[0]) > 0:
 ##            qLine[0].pop(0)
 ##            qAllLines[0].pop(0)
-        contrabandPLines, contrabandRLines = [], []
-        contrabandQLines = contrabandPLines, contrabandRLines
-        return qLine
+        return qLine, contrabandQLines
 
 # # #                   
 
 
-def testPoemLine(newQLine, writQLines, writIndex):
+def testPoemLine(newQLine, writQLines, writIndex, supContraLines):
     #$print('testPoemLine')
     if len(newQLine[0]) > 0: # anything that results in failure from poemLiner will return a line with len==0, the implicit else is that nothing is added. Start over.
         #$print('tPL1')
@@ -493,12 +491,17 @@ def testPoemLine(newQLine, writQLines, writIndex):
         writQLines[1].append(newQLine[1])
         if len(writQLines[0]) >= len(supContraLines):
             supContraLines.append([[],[]])
+            print('supCon extend')
+            conNum = int(0)
+            for each in supContraLines:
+                conNum+=1
+                print('contra:', conNum, len(each[0]), len(each[1]))
     elif len(writQLines[0]) > 0:
         #$print('tPL2')
         writQLines = writQLines[0][:-1], writQLines[1][:-1]
     writIndex = len(writQLines[0])
     #$print(writQLines, writIndex)
-    return writQLines, writIndex
+    return writQLines, writIndex, supContraLines
 
 
 def stanzaWriter(stanza, rhymeMap, meterMap, usedList, startTimeM, startTimeH):
@@ -512,15 +515,15 @@ def stanzaWriter(stanza, rhymeMap, meterMap, usedList, startTimeM, startTimeH):
     writQLines = [writPLines, writRLines]
     pAllLines, rAllLines = [], []
     qAllLines = pAllLines, rAllLines
-    contrabandPLines, contrabandRLines, contrabandQLines = [], [], [[], []]
+    supContraLines = [[[], []]]
     if rhySwitch == 0 and metSwitch == 0: # then we have rhyme and meter in the template
         while len(writQLines[0]) < min(len(meterMap), len(rhymeMap)):
-            #$print('stanzaWriter1')
+            print('stanzaWriter1')
             if len(writQLines[0]) == 0:
-                #$print('sWa')
-                newQLine = poemLiner(meterMap[0], [[],[]], [], supContraLines[writIndex])
+                print('sWa')
+                newQLine, supContraLines[writIndex] = poemLiner(meterMap[0], [[],[]], [], supContraLines[writIndex])
             elif writIndex != rhymeMap.index(rhymeMap[writIndex]): # then the present rhyme token isn't the first in rhymeMap; we need a rhymelist.
-                #$print('sWb')
+                print('sWb')
                 checkPunx, checkRhy = -1, '.'
                 while checkRhy in endPunx:
                     checkRhy = writQLines[0][rhymeMap.index(rhymeMap[writIndex])][checkPunx]
@@ -540,35 +543,35 @@ def stanzaWriter(stanza, rhymeMap, meterMap, usedList, startTimeM, startTimeH):
                         writIndex-=1
                         rhyBit = rhymeMap[writIndex]
                 else:
-                    #$print('swb gogo')
+                    print('swb gogo')
                     #$print(rhyWords)
                     # needs to send contrabandLines to a superlist
-                    newQLine = poemLiner(meterMap[writIndex], writQLines, rhyWords, supContraLines[writIndex]) # feed the rhyList and the anteLines into poemLiner, depending on the writIndex count
+                    newQLine, supContraLines[writIndex] = poemLiner(meterMap[writIndex], writQLines, rhyWords, supContraLines[writIndex]) # feed the rhyList and the anteLines into poemLiner, depending on the writIndex count
             else: # then we have an unrhyming line that is after another. No rhymes, but anteLines
-                #$print('sWc')
-                newQLine = poemLiner(meterMap[writIndex], writQLines, [], supContraLines[writIndex])
-            writQLines, writIndex = testPoemLine(newQLine, writQLines, writIndex)
+                print('sWc')
+                newQLine, supContraLines[writIndex] = poemLiner(meterMap[writIndex], writQLines, [], supContraLines[writIndex])
+            writQLines, writIndex, supContraLines = testPoemLine(newQLine, writQLines, writIndex, supContraLines)
     elif rhySwitch == 1 and metSwitch == 0: # then we have meter but not rhyme
         while len(writQLines[0]) < len(meterMap):
-            #$print('stanzaWriter2')
+            print('stanzaWriter2')
             newQLine = poemLiner(empKey, writQLines, [], supContraLines[writIndex])
-            writQLines, writIndex = testPoemLine(newQLine, writQLines, writIndex)
+            writQLines, writIndex, supContraLines = testPoemLine(newQLine, writQLines, writIndex, supContraLines)
     elif rhySwitch == 0 and metSwitch == 1: # then we have rhyme but not meter
         while len(writQLines[0]) < len(rhymeMap): # do poemLiner with rhymeMap, not empKey. Warning: if emps are different in matched lines, no rhymes will yield.
-            #$print('stanzaWriter3')
+            print('stanzaWriter3')
             for each in meterMap: # The value of -1 will tell poemLiner to ignore it
                 for all in each:
                     all = -1
             rhyWords = gF.rhyDictator(writQLines[0][rhymeMap.index(rhymeMap[writIndex])], 10, 10)
-            newQLine = poemLiner(empKey, writQLines, rhyWords)
-            writQLines, writIndex = testPoemLine(newQLine, writQLines, writIndex)
+            newQLine, supContraLines[writIndex] = poemLiner(empKey, writQLines, rhyWords, supContraLines[writIndex])
+            writQLines, writIndex, supContraLines = testPoemLine(newQLine, writQLines, writIndex, supContraLines)
     else:
         plainLiner() 
     stanza = []
     for each in writQLines[0]:
         thisLine = gF.lineToString(each)
         stanza.append(thisLine)
-    #$print('finished stanza function')
+    print('finished stanza function')
     return stanza, usedList
 
 ##    else:
@@ -685,28 +688,28 @@ def startWemyx():
             #print(each)
             superTokenWords.append(each[0])
             superTokenGrams.append(each[1])
-            dynasaurus[str(each[0]+'.'+each[1][0])] = []
+            dynasaurus[str(each[0])+'.'+str(each[1][0])] = []
         for each in superTokenData:
             try:
-                pWord = each[0]
-                quickToke = each[1][0]
+                pWord = str(each[0])
+                quickToke = str(each[1][0])
                 if quickToke in dynaPOS:
                     if quickToke == 'N':
                         for syns in supersaurus[pWord]:
                             if syns in superTokenWords:
-                                dynasaurus[str(each+'.'+quickToke)].append(syns)        
+                                dynasaurus[pWord+'.'+quickToke].append(syns)        
                     if quickToke == 'V':
                         for syns in supersaurus[pWord]:
                             if syns in superTokenWords:
-                                dynasaurus[str(each+'.'+quickToke)].append(syns) 
+                                dynasaurus[pWord+'.'+quickToke].append(syns) 
                     if quickToke == 'R':
                         for syns in supersaurus[pWord]:
                             if syns in superTokenWords:
-                                dynasaurus[str(each+'.'+quickToke)].append(syns) 
+                                dynasaurus[pWord+'.'+quickToke].append(syns) 
                     if quickToke == 'J':
                         for syns in supersaurus[pWord]:
                             if syns in superTokenWords:
-                                dynasaurus[str(each+'.'+quickToke)].append(syns)
+                                dynasaurus[pWord+'.'+quickToke].append(syns)
             except KeyError:
                 continue
         killList = []
