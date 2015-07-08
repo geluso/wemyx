@@ -389,7 +389,7 @@ def popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey
             return qPopSuperList, qLine, flowData, pLEmps, tagEmpsLine, qAllLines, contrabandQLines
         elif len(qPopSuperList[0][-1]) == 0 and pLEmps != empKey[:len(pLEmps)]:
             if (len(pLineNList) > proxMinDial):
-                flowData = flowSubtracter(qLine[0], flowData, 1)
+                #flowData = flowSubtracter(qLine[0], flowData, 1)
                 qLine, qPopSuperList, qAllLines, flowData, pLEmps, tagEmpsLine = wordSubtracter(qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine, 1, flowData)
             else:
                 qLine, qPopSuperList, qAllLines, flowData, pLEmps, tagEmpsLine = wordSubtracter(qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine, 1, flowData)
@@ -407,7 +407,7 @@ def popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey
         contrabandQLines[0].append(qLine[0])
         contrabandQLines[1].append(qLine[1])
         qLine, qPopSuperList, qAllLines, flowData, pLEmps, tagEmpsLine = wordSubtracter(qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine, 1, flowData)
-        flowData = flowSubtracter(qLine[0], flowData, 1)
+        #flowData = flowSubtracter(qLine[0], flowData, 1)
         print('pxNumList:', len(proxNumList), '>', proxMinDial, '|or| qLineLen:', len(qLine[0]), '<', proxMinDial)
         print('qPoppa1:', len(qPopSuperList[0]), len(qPopSuperList[0][-1]))
     #qLine = qLine[0][len(qAllLines[0]):], qLine[1][len(qAllLines[1]):]
@@ -415,14 +415,18 @@ def popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey
 
 
 def flowSubtracter(xLine, flowData, num):
-    print('fSub')
+    print('fSub start', flowData)
     proxNumList, pLNi, pLineNList = flowData
-    proxNumList, pLineNList = proxNumList[:-num], pLineNList[num:]
+    proxNumList, pLineNList = proxNumList[:-num], pLineNList[:-num]
     if len(pLineNList) > 0:
-        cutNum = pLineNList[0] - len(xLine)
+        newList = []
+        cutNum = pLineNList[0] - len(xLine) - 1
+        print('cutcut')
         for all in pLineNList:
-            all-=cutNum
+            newList.append(all - cutNum)
+        pLineNList = newList
     pLNi-=num
+    print('fSub end', flowData)
     return proxNumList, pLNi, pLineNList
 
 
@@ -433,12 +437,13 @@ def wordSubtracter(qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine, minusTh
     # take everything back a bit
     print(qAllLines)
     print(qLine)
+    print(flowData)
+    qLine = qLine[0][:-minusThis], qLine[1][:-minusThis] 
     if len(qPopSuperList[0][-1]) == 0:
         if len(qAllLines[0]) > 0:
             qAllLines[0].pop(0) 
             qAllLines[1].pop(0)
-        #flowData = flowSubtracter(flowData, 1)
-    qLine = qLine[0][:-minusThis], qLine[1][:-minusThis]  #len(qAllLines[0])
+        flowData = flowDataRefresh(qAllLines[0]+qLine[0])
     tagEmpsLine = tagEmpsLine[:-minusThis]
     qPopSuperList = qPopSuperList[0][:(len(qLine[0])+1)], qPopSuperList[1][:(len(qLine[1])+1)]
     pLEmps = []
