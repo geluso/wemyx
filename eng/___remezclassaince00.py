@@ -127,11 +127,13 @@ def contractionAction(qLine):
 
 def proxSorter(testList, keepList):
     killList = []
-    for each in keepList:
-        if each not in testList:
+    for each in testList:
+        if each in keepList:
             killList.append(each)
     for each in killList:
         keepList.remove(each)
+    for each in killList:
+        keepList.insert(0, each)
 
     return keepList
 
@@ -288,16 +290,17 @@ def popListMaker(empKey, empStr, qAllLines, qLine, qPopSuperList, rhyList, pLEmp
             proxList = []
             try:
                 for each in proxPlusLista[all][zLine[1][pLineNList[all]]]:
-                    if zLine[0]+[each] not in contrabandQLines and zLine[0]+[each] not in supContraLines[empStr]:
+                    if zLine[0]+[each] not in contrabandQLines and zLine[0]+[each] not in supContraLines[empStr] and each != qLine[0][-1]:
                         proxList.append(each)
-                    if all == 0:
+                    if all == 0: # if this is the first word in qLine
                         keepList.append(each)
                 if len(proxList) == 0:
                     print('exit1')
                     qLine, qPopSuperList = acceptKeepers(zLine, qAllLines, qPopSuperList, keepList, rhyList)
                     return qPopSuperList, qLine, pLEmps, tagEmpsLine, qAllLines, contrabandQLines
                 killList = []
-                keepList = proxSorter(proxList, keepList)
+                if (all-1) >= proxMinDial or len(qLine[0]) < proxMinDial:  # don't add words to keepList unless we're passed proxMinDial
+                    keepList = proxSorter(proxList, keepList)
                 #$print('len(proxList)', len(proxList))
                 if gramSwitch == 0: # gramSwitch == 0 means we are looking for grammar. gramSwitch == 1 means we are not.
                     gProxList = []
@@ -527,8 +530,8 @@ def poemLiner(empKey, writQLines, rhyList):
             qPopSuperList, qLine, pLEmps, tagEmpsLine, qAllLines, contrabandQLines = popListMaker(empKey, empStr, qAllLines, qLine, qPopSuperList, rhyList, pLEmps, tagEmpsLine, contrabandQLines)
             qPopSuperList[0][-1] = fastTracker(rhyList, qPopSuperList[0][-1])
         qPopSuperList, qLine, pLEmps, tagEmpsLine, qAllLines, contrabandQLines  = popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey, empStr, rhyList, contrabandQLines)
-        #$print('\n\nend of main while:')
-        #$printData(datetime.datetime.now(), qLine, qAllLines, pLEmps, tagEmpsLine)
+        print('\n\nend of main while:')
+        printData(datetime.datetime.now(), qLine, qAllLines, pLEmps, tagEmpsLine)
         nowM = int(str(datetime.datetime.now())[14:16]) # checks the minute hand
         if str(datetime.datetime.now())[11:13] != startTimeH: # adds 60mins if we've changed the hour
             nowM+=60
@@ -536,19 +539,19 @@ def poemLiner(empKey, writQLines, rhyList):
             #$print('\n--RESET--\n')
             return [], []
     if ((pLEmps != empKey) or (len(pLEmps) != len(empKey))) and ((len(rhyList)==0) or (qLine[0][-1] in rhyList)):
-        #$print('breakpointA')
+        print('breakpointA')
         return qLine
     elif (pLEmps != empKey) and (len(pLEmps) != len(empKey)) and (qLine[0][-1] not in rhyList) and (len(rhyList) > 0): #
         pLEmps = pLEmps[:-(len(emps[qLine[1].pop()]))] # One line removes the word from the qLine[1] and the emps of pLine
-        #$print('shouldnt happen')
+        print('shouldnt happen')
         if len(popList) > 0:
             result = lineAdvancer(popList, empKey)
             return qLine
         else:
-            #$print('breakpointB')
+            print('breakpointB')
             return qLine
     else:
-        #$print('\n\nsuccess!\n', qLine[0], pLEmps)
+        print('\n\nsuccess!\n', qLine[0], pLEmps)
         return qLine
 
 # # #                   
