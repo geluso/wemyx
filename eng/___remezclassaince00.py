@@ -35,7 +35,7 @@ alphabet = 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
 empsList = -1, 0, 1, 2
 
 posTags = 'CC', 'CD', 'DT', 'EX', 'FW', 'IN', 'JJ', 'JJR', 'JJS', 'LS', 'MD', 'NN', 'NNS', 'NNP', 'NNPS', 'PDT', 'POS', 'PRP', 'PRP$', 'RB', 'RBR', 'RBS', 'RP', 'SYM', 'TO', 'UH', 'VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ', 'WDT', 'WP', 'WP$', 'WRB', '.', ',', ';', ':', '!', '?', '"', "'"
-dynaPOS = 'N', 'V', 'W', 'R'
+dynaPOS = 'N', 'V', 'J', 'R'
 quantumTags = 'CC', 'DT', 'WRB', 'WP', 'WP$', 'PRP', 'PRP$', 'TO', 'IN'
 quantumList = []
 
@@ -103,6 +103,18 @@ def gpDataWriter(dicList, fileBit, textFile):
                     pFile.writerow([key, fullString[:-1]])
                 fullString = str()
                 continue    
+
+
+def dynaDataWriter(dynaList, fileBit, textFile):
+    dynaFile = csv.writer(open('data/textLibrary/textData/dynasaurus/'+textFile+'-thes.csv', 'w+'))
+    dynaSaurus = {}
+    for key, val in dynaList.items():
+        svVal = str()
+        for each in val:
+            svVal = svVal+'^'
+        dynaFile.writerow([pWord, svVal]) 
+    #dynaFile.close()
+    return dynaSaurus
 
 
 def dynaMight(wordList, empKey, empStr, pLEmps, superTokens, theReverends): # Grabs possible synonyms, but only ones from the author's lexicon
@@ -232,7 +244,7 @@ def popListMaker(empKey, empStr, qAllLines, qLine, qPopSuperList, rhyList, pLEmp
         
         if len(qPopSuperList[0][-1]) == 0: # If, for some reason, none of the firstWords fit our rhyme scheme
             print('B1')
-            dynaWords, theReverends = dynaMight(wordList, empKey, empStr, pLEmps, superTokens, [{}])
+            dynaWords, theReverends = dynaMight(firstWords, empKey, empStr, pLEmps, superTokens, [{}])
             for all in dynaWords:                
                 qPopSuperList[0][-1].append(all)
         qWord = qPopSuperList[0][-1].pop(qPopSuperList[0][-1].index(random.choice(qPopSuperList[0][-1])))
@@ -366,8 +378,11 @@ def popListMaker(empKey, empStr, qAllLines, qLine, qPopSuperList, rhyList, pLEmp
 def popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey, empStr, rhyList, contrabandQLines):
     print('entering popListDigester', datetime.datetime.now(), qLine, qAllLines, pLEmps, tagEmpsLine)
     firstLineLen = len(qLine[0])
+    thesList = []
+    thesClick = int(0)
     while (len(qPopSuperList[0][-1]) > 0): # and ((len(proxNumList) > proxMinDial) or (len(qLine[0]) <= proxMinDial)): # keep moving forward as long as we keep getting non-empty lists, proxDial restrictions
         pWord = qPopSuperList[0][-1].pop(qPopSuperList[0][-1].index(random.choice(qPopSuperList[0][-1])))
+        thesList.append(pWord)
         #$print('digest:', pWord, '/', len(qPopSuperList[0][-1]))
         ##$print(qLine[0]+[pWord], '|', qLine[0], pWord)
         if qLine[0]+[pWord] not in supContraLines[empStr] and qLine[0]+[pWord] not in contrabandQLines[0]: # This will screen against trees already explored
@@ -390,7 +405,7 @@ def popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey
                     #$print('notaRhyme')
                     qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine = wordSubtracter(qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine, 1)
                 else:
-                    if qLine[-2] in quantumWords and qLine[-1] in quantumWords:
+                    if pLEmps[-1] == '0' and qLine[-1] in quantumWords:
                         print('quantumShift')
                         tagEmpsLine = tagEmpsLine[:-1]
                         tagEmpsLine.append('')
@@ -411,6 +426,25 @@ def popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey
         #$else:
             #$print('contraScreen:', qLine, '|', pWord)
         if len(qPopSuperList[0][-1]) == 0 and pLEmps != empKey[:len(pLEmps)]:
+            if thesClick == 0 and theSwitch == 0: # check if user has thesaurus enabled
+                thesClick == 1 # so we don't reenter this loop
+                while len(thesList) > 0 and thesClick == 0:  # Here's where we start popping items that had previously not worked, to see if it has an effect, thesClick records one loop
+                    thesKey = thesList.pop(0)
+                    thesGLine = gramLineMaker(qLine[1]+[thesKey], flowData)
+                    if thesGLine[-1] == 'NOUN':
+                        for all in dynaSaurus[thesKey+'.N']:
+                            qPopSuperList[0][-1].append(all)
+                    elif thesGLine[-1] == 'VERB':
+                        for all in dynaSaurus[thesKey+'.V']:
+                            qPopSuperList[0][-1].append(all)
+                    elif thesGLine[-1] == 'ADV':
+                        for all in dynaSaurus[thesKey+'.R']:
+                            qPopSuperList[0][-1].append(all)
+                    elif thesGLine[-1] == 'ADJ':
+                        for all in dynaSaurus[thesKey+'.J']:
+                            qPopSuperList[0][-1].append(all)                    
+        else:
+            thesClick == 0
             qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine = wordSubtracter(qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine, 1)
             #$print('B: pxNumList:', len(proxNumList), '>', proxMinDial, '|or| qLineLen:', len(qLine[0]), '<', proxMinDial)
             #$print('qPoppa0:', len(qPopSuperList[0]), len(qPopSuperList[0][-1]))
@@ -758,7 +792,7 @@ def startWemyx():
         gramProxMinusLista = gF.gpDataOpener(gramProxMinusLista, 'gramM', textFile)
         #$for each in proxPlusLista:
             #$print(len(each))
-        dynaSaurus = gF.dynaDataOpener(textFile, 'thes')
+        dynaSaurus = dynaDataOpener(textFile, 'thes', textFile)
         #$print('done with builds')
                     
     except FileNotFoundError:
@@ -768,39 +802,49 @@ def startWemyx():
             ##$print(each)
             superTokenWords.append(each[0])
             superTokenGrams.append(each[1])
-            dynasaurus[str(each[0])+'.'+str(each[1][0])] = []
-        for each in superTokenData:
+            pWord = str(each[0])
+            quickToke = str("XX")
+            if each[1] == ('NOUN' or 'VERB'):
+                quickToke = each[1][0]
+            elif each[1][:3] == 'ADV':
+                quickToke = 'R'
+            elif each[1][:3] == 'ADJ':
+                quickToke = 'J'
             try:
-                pWord = str(each[0])
-                quickToke = str(each[1][0])
-                if quickToke in dynaPOS:
-                    if quickToke == 'N':
-                        for syns in supersaurus[pWord]:
-                            if syns in superTokenWords:
-                                dynasaurus[pWord+'.'+quickToke].append(syns)        
-                    if quickToke == 'V':
-                        for syns in supersaurus[pWord]:
-                            if syns in superTokenWords:
-                                dynasaurus[pWord+'.'+quickToke].append(syns) 
-                    if quickToke == 'R':
-                        for syns in supersaurus[pWord]:
-                            if syns in superTokenWords:
-                                dynasaurus[pWord+'.'+quickToke].append(syns) 
-                    if quickToke == 'J':
-                        for syns in supersaurus[pWord]:
-                            if syns in superTokenWords:
-                                dynasaurus[pWord+'.'+quickToke].append(syns)
+                if len(dynasaurus[pWord+'.'+quickToke]) > 0:
+                    weAlreadyHaveIt = 'so we do nothing'
             except KeyError:
+                try:
+                    if quickToke in dynaPOS:
+                        dynasaurus[pWord+'.'+quickToke] = []
+                        if quickToke == 'N':
+                            for syns in supersaurus[pWord]:
+                                if syns in superTokenWords:
+                                    dynasaurus[pWord+'.'+quickToke].append(syns)        
+                        if quickToke == 'V':
+                            for syns in supersaurus[pWord]:
+                                if syns in superTokenWords:
+                                    dynasaurus[pWord+'.'+quickToke].append(syns) 
+                        if quickToke == 'R':
+                            for syns in supersaurus[pWord]:
+                                if syns in superTokenWords:
+                                    dynasaurus[pWord+'.'+quickToke].append(syns) 
+                        if quickToke == 'J':
+                            for syns in supersaurus[pWord]:
+                                if syns in superTokenWords:
+                                    dynasaurus[pWord+'.'+quickToke].append(syns)
+                except KeyError:
+                    print('no supersaur:', pWord)
+                    continue
                 continue
+
+
         killList = []
         for key, val in dynasaurus.items():
             if len(val) == 0:
                 killList.append(key)
         for all in killList:
             del dynasaurus[all]
-        
-        gF.dynaDataWriter(dynasaurus, textFile, 'thes')
-
         
         #$print('len(superTokenData):', len(superTokenData), '\nlen(superTokenGrams):', len(superTokenGrams), '\n', superTokenData[1000:1200], superTokenGrams[1000:1200], '\ncontinue?')
         for all in range(0, (len(proxPlusLista))):
@@ -823,16 +867,16 @@ def startWemyx():
                     proxWord = superTokens[wordsI+proxNumerator]
                     gramPWord = superTokenGrams[wordsI]
                     gramProxWord = superTokenGrams[wordsI+proxNumerator]
-                    if proxWord not in proxPlusLista[proxDicCounter][pWord]:
-                        proxPlusLista[proxDicCounter][pWord].append(proxWord)
-                    if pWord not in proxMinusLista[proxDicCounter][proxWord]:
-                        proxMinusLista[proxDicCounter][proxWord].append(pWord)
-                    if gramProxWord not in gramProxPlusLista[proxDicCounter][gramPWord]:
-                        #$print('plusadd = gramProx:', gramProxWord, 'gramPWord:', gramPWord)
-                        gramProxPlusLista[proxDicCounter][gramPWord].append(gramProxWord)
-                    if gramPWord not in gramProxMinusLista[proxDicCounter][gramProxWord]:
-                        #$print('minusadd = gramProx:', gramProxWord, 'gramPWord:', gramPWord)
-                        gramProxMinusLista[proxDicCounter][gramProxWord].append(gramPWord)
+                    #if proxWord not in proxPlusLista[proxDicCounter][pWord]:
+                    proxPlusLista[proxDicCounter][pWord].append(proxWord)
+                    #if pWord not in proxMinusLista[proxDicCounter][proxWord]:
+                    proxMinusLista[proxDicCounter][proxWord].append(pWord)
+                    #if gramProxWord not in gramProxPlusLista[proxDicCounter][gramPWord]:
+                    ##print('plusadd = gramProx:', gramProxWord, 'gramPWord:', gramPWord)
+                    gramProxPlusLista[proxDicCounter][gramPWord].append(gramProxWord)
+                    #if gramPWord not in gramProxMinusLista[proxDicCounter][gramProxWord]:
+                    ##print('minusadd = gramProx:', gramProxWord, 'gramPWord:', gramPWord)
+                    gramProxMinusLista[proxDicCounter][gramProxWord].append(gramPWord)
                     proxDicCounter+=1
                     proxNumerator+=1
             except IndexError:          
@@ -852,7 +896,7 @@ def startWemyx():
         gpDataWriter(proxMinusLista, 'proxM', textFile)
         gpDataWriter(gramProxPlusLista, 'gramP', textFile)
         gpDataWriter(gramProxMinusLista, 'gramM', textFile)
-        #gF.dynaDataWriter(dynasaurus, textFile, 'thes')
+        dynaDataWriter(dynasaurus, 'thes', textFile)
 
             
 
@@ -883,8 +927,10 @@ def startWemyx():
         print('meter      | off')
     else:
         print('meter      | on')
-    print('half-beats | N/A')
-    print('thesaurus  | N/A')
+    if halfSwitch == 1:
+        print('half-beats | on')
+    if theSwitch == 1:
+        print('thesaurus  | off')
     while rCt<poemCt:
         rCt+=1
         print('\n\nPoem #'+str(rCt)+'\n'+str(datetime.datetime.now())+'\n')
@@ -1019,6 +1065,20 @@ fono = gF.globalOpen('data/USen/fonDic-USen-MAS.csv', 'string')
 #$print('opening dynasaurus')
 supersaurus = {}
 for each in 'ADJ', 'ADV', 'NOUN', 'VERB':
-    thesFile = open('data/USen/dynasaurus/thes-'+each+'.csv')
+    thesFile = csv.reader(open('data/USen/dynasaurus/thes-'+each+'.csv'))
     for line in thesFile:
-        supersaurus[line[0]] = line[1].split('^')
+        try:
+            breakNum = line[0].index('.')
+            #print('supersaur:', line[0][:breakNum]+'.break')
+            if each == 'NOUN':
+                thisKey = line[0][:breakNum]+'.N'
+            elif each == 'VERB':
+                thisKey = line[0][:breakNum]+'.V'
+            elif each == 'ADV':
+                thisKey = line[0][:breakNum]+'.R'
+            elif each == 'ADJ':
+                thisKey = line[0][:breakNum]+'.J'
+            supersaurus[thisKey] = line[1].split('^')
+        except ValueError:
+            print('VE:', line[0])
+            continue
