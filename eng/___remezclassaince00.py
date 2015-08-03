@@ -105,16 +105,13 @@ def gpDataWriter(dicList, fileBit, textFile):
                 continue    
 
 
-def dynaDataWriter(dynaList, fileBit, textFile):
-    dynaFile = csv.writer(open('data/textLibrary/textData/dynasaurus/'+textFile+'-thes.csv', 'w+'))
-    dynaSaurus = {}
-    for key, val in dynaList.items():
+def dynaDataWriter(dynasaurus, fileBit, textFile):
+    dynaFile = csv.writer(open('data/textLibrary/textData/'+textFile+'-'+fileBit+'.csv', 'w+'))
+    for key, val in dynasaurus.items():
         svVal = str()
         for each in val:
-            svVal = svVal+'^'
-        dynaFile.writerow([pWord, svVal]) 
-    #dynaFile.close()
-    return dynaSaurus
+            svVal = svVal+each+'^'
+        dynaFile.writerow([key, svVal[:-1]]) 
 
 
 def dynaMight(wordList, empKey, empStr, pLEmps, superTokens, theReverends): # Grabs possible synonyms, but only ones from the author's lexicon
@@ -800,41 +797,50 @@ def startWemyx():
         superTokenWords, superTokenGrams = [], []
         for each in superTokenData:
             ##$print(each)
+            ##$print('dynasaur:', len(dynasaurus))
             superTokenWords.append(each[0])
             superTokenGrams.append(each[1])
             pWord = str(each[0])
             quickToke = str("XX")
-            if each[1] == ('NOUN' or 'VERB'):
+            if each[1][0] == ('N' or 'V' or 'J' or 'R'):
                 quickToke = each[1][0]
-            elif each[1][:3] == 'ADV':
-                quickToke = 'R'
-            elif each[1][:3] == 'ADJ':
-                quickToke = 'J'
+            ##$print(quickToke)
             try:
                 if len(dynasaurus[pWord+'.'+quickToke]) > 0:
+                    ##$print('gotten')
                     weAlreadyHaveIt = 'so we do nothing'
             except KeyError:
                 try:
+                    ##$print('going')
                     if quickToke in dynaPOS:
+                        print('superstart', pWord+'.'+quickToke)
                         dynasaurus[pWord+'.'+quickToke] = []
                         if quickToke == 'N':
-                            for syns in supersaurus[pWord]:
-                                if syns in superTokenWords:
-                                    dynasaurus[pWord+'.'+quickToke].append(syns)        
+                            print('super0', supersaurus[pWord+'.'+quickToke])
+                            for each in supersaurus[pWord+'.'+quickToke]:
+                                if each in superTokenWords:
+                                    print('accept:', each)
+                                    dynasaurus[pWord+'.'+quickToke].append(each)        
                         if quickToke == 'V':
-                            for syns in supersaurus[pWord]:
-                                if syns in superTokenWords:
-                                    dynasaurus[pWord+'.'+quickToke].append(syns) 
+                            print('super1', supersaurus[pWord+'.'+quickToke])
+                            for each in supersaurus[pWord+'.'+quickToke]:
+                                if each in superTokenWords:
+                                    print('accept:', each)
+                                    dynasaurus[pWord+'.'+quickToke].append(each) 
                         if quickToke == 'R':
-                            for syns in supersaurus[pWord]:
-                                if syns in superTokenWords:
-                                    dynasaurus[pWord+'.'+quickToke].append(syns) 
+                            print('super2', supersaurus[pWord+'.'+quickToke])
+                            for each in supersaurus[pWord+'.'+quickToke]:
+                                if each in superTokenWords:
+                                    print('accept:', each)
+                                    dynasaurus[pWord+'.'+quickToke].append(each) 
                         if quickToke == 'J':
-                            for syns in supersaurus[pWord]:
-                                if syns in superTokenWords:
-                                    dynasaurus[pWord+'.'+quickToke].append(syns)
+                            print('super3', supersaurus[pWord+'.'+quickToke])
+                            for each in supersaurus[pWord+'.'+quickToke]:
+                                if each in superTokenWords:
+                                    print('accept:', each)
+                                    dynasaurus[pWord+'.'+quickToke].append(each)
                 except KeyError:
-                    print('no supersaur:', pWord)
+                    ##$print('no supersaur:', pWord)
                     continue
                 continue
 
@@ -843,6 +849,7 @@ def startWemyx():
         for key, val in dynasaurus.items():
             if len(val) == 0:
                 killList.append(key)
+        ##$print('kill:', len(killList), len(dynasaurus))
         for all in killList:
             del dynasaurus[all]
         
@@ -892,10 +899,15 @@ def startWemyx():
             newFirstFile.write(all+'\n')
         #$print('writing...', all)
         newFirstFile.close()
+        print('writing proxP...')
         gpDataWriter(proxPlusLista, 'proxP', textFile)
+        print('writing proxM...')
         gpDataWriter(proxMinusLista, 'proxM', textFile)
+        print('writing gProxP...')
         gpDataWriter(gramProxPlusLista, 'gramP', textFile)
+        print('writing gProxM...')
         gpDataWriter(gramProxMinusLista, 'gramM', textFile)
+        print('writing dynasaur...')
         dynaDataWriter(dynasaurus, 'thes', textFile)
 
             
@@ -1079,6 +1091,10 @@ for each in 'ADJ', 'ADV', 'NOUN', 'VERB':
             elif each == 'ADJ':
                 thisKey = line[0][:breakNum]+'.J'
             supersaurus[thisKey] = line[1].split('^')
+            if len(supersaurus)%1000==0:
+                print(thisKey)
         except ValueError:
             print('VE:', line[0])
             continue
+
+##$print('supersaur:', len(supersaurus))
