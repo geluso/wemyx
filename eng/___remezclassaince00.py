@@ -442,46 +442,47 @@ def popListDigester(qPopSuperList, qLine, qAllLines, pLEmps, tagEmpsLine, empKey
             print('contraScreen:', qLine, '|', pWord)
         if len(qPopSuperList[0][-1]) == 0:
             print('thesTest:', thesClicks, theSwitch)
-            if thesClicks[-1] == 0 and theSwitch == 0: # check if user has thesaurus enabled
-                print('thesLoop')
-                for each in qAllLines[0]:
-                    thesClicks.insert(0, 0)
-                thesClicks = thesClicks[:-1]
-                thesClicks.append(1) # so we don't reenter this loop
-                while len(thesList) > 0:  # Here's where we start popping items that had previously not worked, to see if it has an effect, thesClicks records one loop
-                    thesKey = thesList.pop(0)
-                    pLNi = int(0)
-                    proxNumList, pLineNList = [], []
-                    while pLNi < (len(qLine[1])+1):
-                        proxNumList.append(pLNi)
-                        pLineNList.insert(0, pLNi)
-                        pLNi+=1
-                    pLNi-=1
-                    print(proxNumList, pLNi, pLineNList, qLine[1]+[thesKey])
-                    printData(datetime.datetime.now(), qLine, qAllLines, pLEmps, tagEmpsLine, thesClicks)
-                    flowData = proxNumList[:proxMaxDial], min(pLNi, proxMaxDial), pLineNList[:proxMaxDial]
-                    thesGLine = gramLineMaker(qLine[1]+[thesKey], flowData)
-                    if thesGLine[-1] == 'NOUN':
-                        for all in dynaSaurus[thesKey+'.N']:
-                            print('dyna-N')
-                            qPopSuperList[0][-1].append(all)
-                    elif thesGLine[-1] == 'VERB':
-                        for all in dynaSaurus[thesKey+'.V']:
-                            print('dyna-V')
-                            qPopSuperList[0][-1].append(all)
-                    elif thesGLine[-1] == 'ADV':
-                        for all in dynaSaurus[thesKey+'.R']:
-                            print('dyna-R')
-                            qPopSuperList[0][-1].append(all)
-                    elif thesGLine[-1] == 'ADJ':
-                        for all in dynaSaurus[thesKey+'.J']:
-                            print('dyna-J')
-                            qPopSuperList[0][-1].append(all)
-                if len(qPopSuperList[0][-1]) == 0:
-                    qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine, thesClicks = wordSubtracter(qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine, 1, thesClicks)
-                print('last', len(qPopSuperList[0][-1]))
-                thesClicks = thesClicks[len(qAllLines[0]):]
-                return qPopSuperList, qLine, pLEmps, tagEmpsLine, qAllLines, contrabandQLines, thesClicks
+            if len(thesClicks) > 0:
+                if thesClicks[-1] == 0 and theSwitch == 0: # check if user has thesaurus enabled
+                    print('thesLoop')
+                    for each in qAllLines[0]:
+                        thesClicks.insert(0, 0)
+                    thesClicks = thesClicks[:-1]
+                    thesClicks.append(1) # so we don't reenter this loop
+                    while len(thesList) > 0:  # Here's where we start popping items that had previously not worked, to see if it has an effect, thesClicks records one loop
+                        thesKey = thesList.pop(0)
+                        pLNi = int(0)
+                        proxNumList, pLineNList = [], []
+                        while pLNi < (len(qLine[1])+1):
+                            proxNumList.append(pLNi)
+                            pLineNList.insert(0, pLNi)
+                            pLNi+=1
+                        pLNi-=1
+                        print(proxNumList, pLNi, pLineNList, qLine[1]+[thesKey])
+                        printData(datetime.datetime.now(), qLine, qAllLines, pLEmps, tagEmpsLine, thesClicks)
+                        flowData = proxNumList[:proxMaxDial], min(pLNi, proxMaxDial), pLineNList[:proxMaxDial]
+                        thesGLine = gramLineMaker(qLine[1]+[thesKey], flowData)
+                        if thesGLine[-1] == 'NOUN':
+                            for all in dynaSaurus[thesKey+'.N']:
+                                print('dyna-N')
+                                qPopSuperList[0][-1].append(all)
+                        elif thesGLine[-1] == 'VERB':
+                            for all in dynaSaurus[thesKey+'.V']:
+                                print('dyna-V')
+                                qPopSuperList[0][-1].append(all)
+                        elif thesGLine[-1] == 'ADV':
+                            for all in dynaSaurus[thesKey+'.R']:
+                                print('dyna-R')
+                                qPopSuperList[0][-1].append(all)
+                        elif thesGLine[-1] == 'ADJ':
+                            for all in dynaSaurus[thesKey+'.J']:
+                                print('dyna-J')
+                                qPopSuperList[0][-1].append(all)
+                    if len(qPopSuperList[0][-1]) == 0:
+                        qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine, thesClicks = wordSubtracter(qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine, 1, thesClicks)
+                    print('last', len(qPopSuperList[0][-1]))
+                    thesClicks = thesClicks[len(qAllLines[0]):]
+                    return qPopSuperList, qLine, pLEmps, tagEmpsLine, qAllLines, contrabandQLines, thesClicks
         else:
             qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine, thesClicks = wordSubtracter(qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine, 1, thesClicks)
             print('B: qLineLen:', len(qLine[0]), '<', proxMinDial)
@@ -510,6 +511,7 @@ def wordSubtracter(qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine, minusTh
     # by blacklisting the arrangement of words, we stop the lineBuilder from testing combinations we've already exhausted
     # take everything back a bit
     #$printData(datetime.datetime.now(), qLine, qAllLines, pLEmps, tagEmpsLine, thesClicks)
+    print('thes:', thesClicks)
     qLine = qLine[0][:-minusThis], qLine[1][:-minusThis] 
     if len(qPopSuperList[0][-1]) == 0:
         if len(qAllLines[0]) > 0:
@@ -518,7 +520,10 @@ def wordSubtracter(qLine, qPopSuperList, qAllLines, pLEmps, tagEmpsLine, minusTh
     tagEmpsLine = tagEmpsLine[:-minusThis]
     qPopSuperList = qPopSuperList[0][:(len(qLine[0])+1)], qPopSuperList[1][:(len(qLine[1])+1)]
     pLEmps = []
-    thesClicks = thesClicks[:-minusThis]
+    if len(thesClicks) > 0:
+        thesClicks = thesClicks[:-minusThis]
+        if len(qLine) > 0:
+            print('fucknuggets')
     for all in tagEmpsLine:
         ##$print('tEL0:', all)
         for each in all:
