@@ -17,8 +17,9 @@ punxTags = ['"', "'", "''", ':']
 allPunx = ['.', ',', ';', ',', ':', '!', '?', '--', '``', '`', '"', "''"]
 midPunx = [',', ';', ',', ':', '--']
 endPunx = ['.', '!', '?']
-punx = [',', ';', ',', ':', '--', '"', '-', "''", "''", "''"]
+punx = [',', ';', ',', ':', '--', '"', '-', "''", "''", "''", '(', ')']
 badGrams = ['``', '"', "''", '`', '']
+
 
 ####
 
@@ -30,6 +31,27 @@ badGrams = ['``', '"', "''", '`', '']
 #   - redesign tkinter window to something prettier
 
 
+def textPrep(texto):
+
+    texto = texto.replace('\n', ' ')
+    for all in allPunx:  #  Put a space end-punctuation to treat it like another word.
+        texto = texto.replace(all, ' '+all+' ')
+    texto = texto.replace("   ", ' ')  #  Makes 3 spaces after end of sentence into just one
+    texto = texto.replace("  ", ' ')  #  Then more for good measure
+
+    # print(texto)
+
+    #  Tokenizes raw text
+    #  ++ is this where I should start monitoring contractions?
+    global splitText
+    splitText = texto.split(' ')
+    global superTokens
+    superTokens = nltk.word_tokenize(texto)
+    # print(splitText)
+    
+    return splitText, superTokens
+
+
 def gpDataWriter(dicList, fileBit, textFile):
 
     ##  Writes grammar and proximity data to hard drive
@@ -38,17 +60,19 @@ def gpDataWriter(dicList, fileBit, textFile):
     print('building: data/textLibrary/textData/'+textFile+'-'+fileBit+'.csv')
     #print(dicList)
     for key, val in dicList[0].items():
-        #print(key)
+        print(key)
         fullString = str()
         for each in dicList:
             dicString = str()
             for entr in each[key]:
-                #print('gpData:', entr, )
+                print('gpData:', entr, )
                 dicString = dicString+entr+'^'  #  Entries for each proxLib are separated by the '^'
             fullString = fullString+dicString[:-1]+'~'  #  Proxlibs are separated by '~'. proxPlusLista is saved in one file.
-        #print(fileBit, 'writing:', key, fullString[:min(20, len(fullString))])
-        if len(fullString) > 0:
-            pFile.writerow([key, fullString[:-1]])
+        for char in fullString:
+            if char != '~':      # This is to screen for empty sets. If one char is not a tilde then it's non-empty.
+                print(fileBit, 'writing:', key, fullString[:min(20, len(fullString))])
+                pFile.writerow([key, fullString[:-1]])
+                break
 
 
 def dataOpener():  # write filepath as variable to allow different types of data
@@ -59,7 +83,7 @@ def dataOpener():  # write filepath as variable to allow different types of data
     return dynasaurus
 
 
-def newProxLibs(proxLista, libInt, wordLista, textFile): # Subfunction in loadmakeData for brevity. Creates uppercase versions of words
+def newProxLibs(proxLista, libInt, wordLista, textFile): # Subfunction in loadmakeData for brevity. Creates blank entries to add to. Uppercase versions of words too.
     for each in wordLista:
         proxLista[libInt][each.lower()] = []
         if len(each) > 1:
@@ -80,10 +104,10 @@ def proxLibBuilder(thisLib, thisFile, specialText, textFile):  #  Another subfun
                 while proxDicCounter < proxMax:
                     proxWord = specialText[wordsI+proxNumerator]
                     if proxWord not in thisLib[0][proxDicCounter][pWord]:
-                        #print('plusadd = proxP:', proxWord, 'pWord:', pWord)
+                        print('plusadd = proxP:', proxWord, 'pWord:', pWord)
                         thisLib[0][proxDicCounter][pWord].append(proxWord)
                     if pWord not in thisLib[1][proxDicCounter][proxWord]:
-                        #print('minusadd = proxM:', proxWord, 'pWord:', pWord)
+                        print('minusadd = proxM:', proxWord, 'pWord:', pWord)
                         thisLib[1][proxDicCounter][proxWord].append(pWord)
                     proxDicCounter+=1
                     proxNumerator+=1
@@ -148,6 +172,7 @@ def loadmakeData(textFile, thesSwitch):
                 fwI = 0
                 while fwI < sTLen:  #  Will this while loop terminate?
                     if splitText[fwI] not in firstWords:
+                        splitText[fwI] = splitText[fwI].lower()
                         firstWords.append(splitText[fwI])      # Finds punctuation, then moves one step forward to get first word of new sentence.
                     fwI = splitText.index(each, fwI) + 1       # This will also start the indexing beyond the puncuation, insuring that it will keep moving
             except ValueError: #  We've gotten to the end and couldn't find any more
@@ -312,25 +337,10 @@ def startWemyx():  #  Main function that begins entire program
     metMap = [[1001], [1001]]
     
     print('\nstarting remix')
-    textFile = 'ulysses' # textChoice.get() # name will access text and data about it
+    textFile = 'test0' # textChoice.get() # name will access text and data about it
     texto = str(open('data/textLibrary/'+textFile+'.txt', 'r', encoding='latin-1').read())
 
-    texto = texto.replace('\n', ' ')
-    for all in allPunx:  #  Put a space end-punctuation to treat it like another word.
-        texto = texto.replace(all, ' '+all+' ')
-    texto = texto.replace("   ", ' ')  #  Makes 3 spaces after end of sentence into just one
-    texto = texto.replace("  ", ' ')  #  Then more for good measure
-
-    # print(texto)
-
-    #  Tokenizes raw text
-    #  ++ is this where I should start monitoring contractions?
-    global splitText
-    splitText = texto.split(' ')
-    global superTokens
-    superTokens = nltk.word_tokenize(texto)
-    # print(splitText)
-
+    splitText, superTokens = textPrep(texto)  #  A function to prepare the text for analysis
     proxLib, gramProxLib, dynasaurus, firstwords = loadmakeData(textFile, False) #  Either generates or loads proxLibs
 
     rCt = int(0)
