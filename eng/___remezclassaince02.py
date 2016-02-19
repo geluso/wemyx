@@ -12,6 +12,7 @@ csv.field_size_limit(int(9999999))
 posTags = 'CC', 'CD', 'DT', 'EX', 'FW', 'IN', 'JJ', 'JJR', 'JJS', 'LS', 'MD', 'NN', 'NNS', 'NNP', 'NNPS', 'PDT', 'POS', 'PRP', 'PRP$', 'RB', 'RBR', 'RBS', 'RP', 'SYM', 'TO', 'UH', 'VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ', 'WDT', 'WP', 'WP$', 'WRB', '.', ',', ';', ':', '!', '?', '"', "'"
 quantumTags = 'CC', 'DT', 'WRB', 'WP', 'WP$', 'PRP', 'PRP$', 'TO', 'IN'
 quantumList = []
+capsList = "I'll", "I'd", "I", 'Mr.', 'Mrs.', "Ms.", "Dr."
 
 punxTags = ['"', "'", "''", ':']
 allPunx = ['.', ',', ';', ',', ':', '!', '?', '--', '``', '`', '"', "''"]
@@ -29,6 +30,7 @@ badGrams = ['``', '"', "''", '`', '']
 #   - discover contraction handling and write function to handle it
 #   - ensure halfbeats are viable
 #   - redesign tkinter window to something prettier
+#   - discriminate against capital words
 
 
 def textPrep(texto):
@@ -60,17 +62,17 @@ def gpDataWriter(dicList, fileBit, textFile):
     print('building: data/textLibrary/textData/'+textFile+'-'+fileBit+'.csv')
     #print(dicList)
     for key, val in dicList[0].items():
-        print(key)
+        #$ print(key)
         fullString = str()
         for each in dicList:
             dicString = str()
             for entr in each[key]:
-                print('gpData:', entr, )
+                #4 print('gpData:', entr, )
                 dicString = dicString+entr+'^'  #  Entries for each proxLib are separated by the '^'
             fullString = fullString+dicString[:-1]+'~'  #  Proxlibs are separated by '~'. proxPlusLista is saved in one file.
         for char in fullString:
             if char != '~':      # This is to screen for empty sets. If one char is not a tilde then it's non-empty.
-                print(fileBit, 'writing:', key, fullString[:min(20, len(fullString))])
+                #$ print(fileBit, 'writing:', key, fullString[:min(20, len(fullString))])
                 pFile.writerow([key, fullString[:-1]])
                 break
 
@@ -104,10 +106,10 @@ def proxLibBuilder(thisLib, thisFile, specialText, textFile):  #  Another subfun
                 while proxDicCounter < proxMax:
                     proxWord = specialText[wordsI+proxNumerator]
                     if proxWord not in thisLib[0][proxDicCounter][pWord]:
-                        print('plusadd = proxP:', proxWord, 'pWord:', pWord)
+                        #$ print('plusadd = proxP:', proxWord, 'pWord:', pWord)
                         thisLib[0][proxDicCounter][pWord].append(proxWord)
                     if pWord not in thisLib[1][proxDicCounter][proxWord]:
-                        print('minusadd = proxM:', proxWord, 'pWord:', pWord)
+                        #4 print('minusadd = proxM:', proxWord, 'pWord:', pWord)
                         thisLib[1][proxDicCounter][proxWord].append(pWord)
                     proxDicCounter+=1
                     proxNumerator+=1
@@ -172,7 +174,8 @@ def loadmakeData(textFile, thesSwitch):
                 fwI = 0
                 while fwI < sTLen:  #  Will this while loop terminate?
                     if splitText[fwI] not in firstWords:
-                        splitText[fwI] = splitText[fwI].lower()
+                        if splitText[fwI] not in capsList:
+                            splitText[fwI] = splitText[fwI].lower()
                         firstWords.append(splitText[fwI])      # Finds punctuation, then moves one step forward to get first word of new sentence.
                     fwI = splitText.index(each, fwI) + 1       # This will also start the indexing beyond the puncuation, insuring that it will keep moving
             except ValueError: #  We've gotten to the end and couldn't find any more
@@ -337,7 +340,7 @@ def startWemyx():  #  Main function that begins entire program
     metMap = [[1001], [1001]]
     
     print('\nstarting remix')
-    textFile = 'test0' # textChoice.get() # name will access text and data about it
+    textFile = 'bibleX' # textChoice.get() # name will access text and data about it
     texto = str(open('data/textLibrary/'+textFile+'.txt', 'r', encoding='latin-1').read())
 
     splitText, superTokens = textPrep(texto)  #  A function to prepare the text for analysis
