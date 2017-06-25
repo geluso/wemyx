@@ -57,6 +57,8 @@ badGrams = ['``', '"', "''", '`', '']
 notFirst = ['and', 'And', 'or', 'Or']
 nonEnders = ['a', 'A', 'the', 'The', 'or', 'Or', 'and', 'And', 'of', 'Of', 'an', 'An']
 
+#  maybe put this in another location, such as textCleaner()?
+
 print('grooming text...')
 texto = str(open('data/textLibrary/'+textFile+'.txt', 'r', encoding='latin-1').read())
 texto = texto.replace('Mr.', 'Mister')

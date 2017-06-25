@@ -52,7 +52,9 @@ cons = 'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's'
 strippers = '”', '’', "'", '…', '…', '—', '·', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '<', '>', '"', ',', '!', '.', ',', '‘', '’', '`', '~', '/', '+', '=', '|', '\c', '\n', '?', ';', ':', '_', '-', '¿', '»', '«', '¡', '©', '“', '”', 'º', '/', '\c'
 spacers = '\n\n\n', '\n\n', '\n', '    ', '      ', '     ', '    ', '   ', '  '
 caps =  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Á', 'É', 'Í', 'Ó', 'Ú', 'Ü',
+allPunx = ['.', ',', ';', ',', ':', '!', '?', '--', '``', '`', '"', "'", "''"]
 silentPunx = ['.', ',', ';', ',', ':', '!', '?', '--', '``', '`']
+endPunx = ['.', '!', '?']
 
 palabras = []
 
@@ -127,7 +129,7 @@ def dynaDataOpener(textFile, dynaType):
     return dynaSaurus
 
 
-def gpDataOpener(allDics, strBit, textFile):
+def proxDataOpener(allDics, strBit, textFile):
     dataFile = csv.reader(open('data/textLibrary/textData/'+textFile+'-'+strBit+'.csv', 'r'))
     gpDic = {}
     for line in dataFile:
@@ -347,6 +349,95 @@ def stringToLine(pString):
         pLine.remove('')
    #$ print('str2Line:', pLine)
     return pLine
+
+
+def pStringToLineData(pString, doubles):
+
+    pLine = []
+    pLEmps = []
+    pLFono = []
+    pLVocs = []
+    pLCons = []
+    for all in allPunx:
+        if all in pString:
+            pString = pString.replace(all, ' '+all)
+    pLine = pString.split(' ')
+    while '' in pLine:
+        pLine.remove('')
+    for each in pLine:
+        pWord = each.lower()
+        if each in doubles:
+            pWord = pWord+'(0)'
+        try:
+            emps[pWord]
+        except KeyError:
+            pWord = pWord[0].upper()+pWord[1:]
+            try:
+                emps[pWord]
+            except KeyError:
+                break
+            continue
+        except IndexError:
+            continue
+        if pWord == ("i'm" or 'i' or "I'll" or "i'd"):
+            pWord = pWord.replace('i', 'I')
+        if pWord not in allPunx:
+            pLEmps+=emps[pWord]
+
+    return pLine, pLEmps, pLFono, pLVocs, pLCons
+
+
+def pLineToStringData(pLine, empKeyLet, doubles):
+
+    pString = str()
+##    pLEmps = []
+##    pLFono = []
+##    pLVocs = []
+##    pLCons = []
+##    for each in pLine:
+##        pWord = each
+##        pWord = each.lower()
+##        if pWord in doubles:
+##            pWord = pWord+'(0)'
+##        try:
+##            emps[pWord]
+##        except KeyError:
+##            try:
+##                pWord = pWord[0].upper()+pWord[1:]
+##                emps[pWord]
+##            except KeyError:
+##                break
+##            except IndexError:
+##                break
+##            continue
+##        if pWord not in allPunx:
+##            if pWord in quantumList:
+##                pLEmps+=empKeyLet[len(pLEmps):(len(pLEmps)+len(emps[pWord]))]
+##            else:
+##                pLEmps+=emps[pWord]
+##        if '(' in pWord:
+##            pWord = pWord[:-3]
+##        if each[0].isupper():
+##            pWord = pWord[0].upper()+pWord[1:]
+    for each in pLine:
+        pString = pString + each + ' '
+    pString = pString[:-1]
+    #print('pString check:', pString)
+    for each in allPunx:
+        if each in pString:
+            pString = pString.replace(' '+each, each)
+    for each in endPunx:
+        iSpot = int(0)
+        if each in pString:
+            punxSpot = pString.index(each)
+            if punxSpot <= (len(pString)-3):
+                bigLetter = pString[punxSpot+2].capitalize()
+                pString = pString[:punxSpot+2]+bigLetter+pString[punxSpot+3:]
+    if len(pString) >= 2:
+        pString = pString[0].upper() + pString[1:]
+
+    return pString
+
 
 
 #####
