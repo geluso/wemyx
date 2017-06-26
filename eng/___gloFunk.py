@@ -257,7 +257,7 @@ def dataLine(pLine, dic):
         
         
 
-def empsLine(pLine, emps, doubles, empKeyLet):
+def empsLine(pLine, emps, doubles):
 
     empsLine = []
     #empHost = pLine.split(' ')

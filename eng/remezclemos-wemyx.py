@@ -461,27 +461,38 @@ def plainDigester():
     return doo, doo
 
 
-def metPopDigester(empKey, superPopList, qAnteData, qLine, proxData):
-    pLEmps = gF.lineData(qAnteData[0][0], qLine[0])
+def metPopDigester(empLine, superPopList, qAnteLine, qLine, proxData):
+    pLEmps = gF.empsLine(qLine[0], emps, doubles)
     while len(superPopList[-1]) > 0:
         pWord = superPopList[-1].pop(superPopList[-1].index(random.choice(superPopList[-1])))
-        pWEmps = emps[pWord]
+        pWEmps = gF.empsLine([pWord], emps, doubles)
         testEmps = pLEmps + pWEmps
-        if testEmps == empKey[:-len(testEmps)]:
-            if pWord in contractionList:
-               qWord = contractionAction(qLine[0], pWord, -1)  #  Adds a contraction to the 
-               return superPopList, qWord
-            else:
-               return superPopList, [pWord, pWord]  #  
-    return superPopList, ''  #  If we've run out of words, empty newWord
+        if len(testEmps) <= len(empLine):  #  This is to screen against an error
+            if testEmps == empLine[:len(testEmps)]:  #  Check if the word is valid
+                if pWord in contractionList:
+                   qWord = contractionAction(qLine[0], pWord, -1)  #  Adds a contraction to the 
+                   return superPopList, qWord
+                else:
+                    acceptWordR(qWord)
+                    pLine, pLineNum, pLineNList, proxNum, proxNumList, superPopList, expressList, superBlackList, jumpProxList = acceptWordR(qLine)
+                    return superPopList, qLine, proxData  #
+        else:
+            testEmps = testEmps[:-len(pWEmps)]  #  The word extended the line too far, so subtract it
+    return superPopList, '', proxData  #  If we've run out of words, empty newWord
 
         
 def firstWordSuperPopList():  #  Creates a superPopList that reloads the global firstWords list
-    startList = []
+    superPopList = [[]]
     for all in firstWords:
-        startList.append(all)
-    return startList
+        superPopList[0].append(all)
+    return superPopList
 
+
+def makeList(listA):  #  Simple function that appends all from one list to other, so they are not bound together
+    [] = listB
+    for all in listA:
+        listB.append(all)
+    return listB
         
     
 ##############
@@ -493,8 +504,8 @@ def vetoLine(qAnteLine):  #  Resets values in a line to
     runLine = []
     for each in qAnteLine:  #  Re-create any qAnteLine as a mutable variable
         runLine.append(all)
-    startList = firstWordSuperPopList()
-    return runLine, startList, [int(0), int(0), int(0), []], [], False
+    superPopList = firstWordSuperPopList()
+    return runLine, superPopList, [int(0), int(0), int(0), []], [], False
           #runLine, qLine, proxData, rhymeList, redButton
 
 
@@ -508,19 +519,21 @@ def plainLinerRtoL(vars):
 
 
 def meterLiner(qAnteLine, usedList, expressList, rhymeList, proxData, empLine):
-    print(lineno(), 'rhymeLiner start\nPrevious:', qAnteLine)
-    runLine = []
+    print(lineno(), 'meterLiner start\nPrevious:', qAnteLine, '\nempLine:', empLine)
+    qLine, runLine, pLEmps = [[],[]], [], []
     for all in qAnteLine[0]:  #  qAnteLine  
         runLine.append(all)
-    while pLEmps != empKey:  #  Keep going until the line is finished or returns blank answer
-        if len(runLine) == 0 and len(qLine[0]):   #  Check if we're starting with a completely empty line, load firstWords to superPopList if so
-            startList = firstWordSuperPopList()
-            superPopList, qWord = metPopListDigester([startList], etc)
+    while pLEmps != empLine:  #  Keep going until the line is finished or returns blank answer
+        if (len(runLine) == 0) and (len(qLine[0]) == 0):  #  Check if we're starting with a completely empty line, load firstWords to superPopList if so
+            print(lineno(), 'met if0')
+            superPopList = firstWordSuperPopList() 
+            superPopList, qLine, proxData = metPopDigester(empLine, superPopList, qAnteLine, qLine, proxData)
             if len(superPopList[0]) == 0 and len(qWord[0]) == 0:
                 return superPopList, qAnteLine, qLine, usedList, True #  redButton event
             else:
-                acceptWord()
+                return superPopList, qAnteLine, qLine, usedList, False
         elif len(runLine) > 0:  #  Checks before trying to manipulate qAnteLine just below, also loops it so it subtracts from anteLine first
+            print(lineno(), 'met if1')
             runLine = runLine + qLine[0]  #  Maybe qLine[0] is still nothing, but the whole stanza is one continuous line, in a sense of thinking
             superPopList = superPopListMaker(runLine)
             superPopList, qWord = superPopListDigester(superPopList, run)
@@ -530,6 +543,7 @@ def meterLiner(qAnteLine, usedList, expressList, rhymeList, proxData, empLine):
             else:
                 print('fill-in line')
         elif len(qLine[0]) > 0:
+            print(lineno(), 'met if2')
             superPopList = superPopListMaker(qLine[0], etc)
             superPopList, qWord = superPopListDigester(superPopList, etc)
             runLine = wordTester(empKey, runLine, qWord)
@@ -540,7 +554,9 @@ def meterLiner(qAnteLine, usedList, expressList, rhymeList, proxData, empLine):
                     runLine, superPopList, proxData = subTractWordR(data, data)
                     superPopList = superPopListMaker(runLine)
         else:  #  No runLine, no qLine, and superPopList[0] is out of firstWords
-            return superPopList, qAnteLine, qLine, usedList, True
+            print(lineno(), 'met if3')
+            runLine, qLine, proxData, rhymeList, redButton = vetoLine(qAnteLine)
+            return [[]], qAnteLine, qLine, usedList, True
         while len(pLEmps) > empKey:  #  If somehow the line went over the numbered lists
             runLine, superPopList, proxData = subtractWordR(data, data)
     return superPopList, qAnteLine, qLine, usedList, False
@@ -550,7 +566,7 @@ def meterLiner(qAnteLine, usedList, expressList, rhymeList, proxData, empLine):
 def rhymeLiner(qAnteLine, usedList, expressList, rhymeList, proxData, empLine):
     for all in rhymeList:
         expressList.append(all)
-    superPopList, qAnteLine, qLine = meterLiner(qAnteLine, usedList, expressList, proxData, empLine)  #  First, let it build a line, then if it doesn't happen to rhyme, send it back 
+    superPopList, qAnteLine, qLine, usedList, redButton = meterLiner(qAnteLine, usedList, expressList, proxData, empLine)  #  First, let it build a line, then if it doesn't happen to rhyme, send it back 
     while qLine[0][-1] not in rhymeList:  #  Unless we find a rhyme to escape this loop, it'll subtract the word every time it gets to the beginning of the loop
         for each in superPopList[-1]:  #  Let's see if there was a rhyme in our popList to add. If we don't return anything, it leaves this section like an moves on, like an implied "else"
             if each in rhymeList:  #  If there's a rhyme, then we can switch out the last word for that instead
@@ -562,32 +578,34 @@ def rhymeLiner(qAnteLine, usedList, expressList, rhymeList, proxData, empLine):
                 qLine = subtractWordL(qAnteLine)  #  Take away a word from the previous line's beginning, because this line didn't yield anything
                 qLine = subtractWordR(qLine)  #  And take away the word that didn't work
             if len(expressList) > 0:  #  Use the expressList with rhyming words created at the beginning of this function
-                superPopList, qAnteLine, qLine = meterLiner(qAnteLine, usedList, expressList, proxData, empLine)
+                superPopList, qAnteLine, qLine, usedList, redButton = meterLiner(qAnteLine, usedList, expressList, proxData, empLine)
         elif len(qLine[0]) > 0:  #  Subtract from 
             qLine = subtractWordR(qLine)
-            superPopList, qAnteLine, qLine, redButton = meterLiner(qAnteLine, usedList, expressList, proxData, empLine)  #  Here and below, meterLiner now has an expressList with the rhyming words, to increase their preference
+            superPopList, qAnteLine, qLine, usedList, redButton = meterLiner(qAnteLine, usedList, expressList, proxData, empLine)  #  Here and below, meterLiner now has an expressList with the rhyming words, to increase their preference
         else:
             return qLine, usedList, True
     return qLine, usedList, False
 
 
-def lineGovernor(qAnteLine, usedList, expressList, rhymeList, empLine):
-    print(lineno(), 'lineGovernor start')
+def lineGovernor(qAnteLine, usedList, expressList, rhymeThisLine, rhymeList, empLine):
+    print(lineno(), 'lineGovernor start', rhymeThisLine)
     runLine, qLine, proxData, rhymeList, redButton = vetoLine(qAnteLine)  #  Start with empty variables declared. This function is also a reset button if lines are to be scrapped.
-    
-    if rhySwitch == True:
+    if rhymeThisLine == True:
+        print(lineno(), rhymeThisLine)
         if (len(rhymeList) > 0):  #  This dictates whether stanzaGovernor sent a rhyming line. An empty line indicates metered-only, or else it would've been a nonzero population
             qLine, usedList, redButton = rhymeLiner(qAnteLine, usedList, expressList, rhymeList, proxData, empLine)
         else:
-            return            
+            print(lineno(), 'no rhymes')
+            return [], [], True  #  newLine, usedList, redButton
     elif metSwitch == True:  #  If metSwitch is off, then we wouldn't have either rhyme or meter
-        qLine, usedList, redButton = meterLiner(qAnteLine, usedList, expressList, rhymeList, proxData, empLine)
+        superPopList, qAnteLine, qLine, usedList, redButton = meterLiner(qAnteLine, usedList, expressList, rhymeList, proxData, empLine)
     else:
         qLine, usedList, redButton = plainLinerLtoR(qAnteLine, usedList, expressList, rhymeList, proxData, empLine)
     if redButton == True:
         runLine, qLine, proxData, rhymeList, redButton = vetoLine(qAnteLine)
+        return [], [], True
     else:
-        return newLine, usedList
+        return newLine, usedList, True  #  newLine, usedList, redButton
             
 
 
@@ -596,17 +614,18 @@ def lineGovernor(qAnteLine, usedList, expressList, rhymeList, empLine):
 
 
 def vetoStanza(usedList):
-    return [], [[], []], [], int(0), False
+    return [], [[],[]], [], int(0), False, False
           #stanza, qAnteLine, usedList, lineCt, redButton
 
 
 def stanzaGovernor(usedList):
     print(lineno(), 'stanzaGovernor begin len(rhyMap):', len(rhyMap), 'len(empMap):', len(empMap))
     expressList = []  #  A list of words that go to the front of the line. Declared and left empty, for now
-    stanza, qAnteLine, usedList, lineCt, redButton = vetoStanza([])  #  Creates a fresh stanza, no usedList
+    stanza, qAnteLine, usedList, lineCt, rhymeThisLine, redButton = vetoStanza([])  #  Creates a fresh stanza, no usedList
     while lineCt < len(rhyMap):
         if rhySwitch == True:
             anteRhyme = rhyMap.index(rhyMap[lineCt])  #  Use the length of the stanza with rhyMap to determine if a previous line should be rhymed with the current
+            print(anteRhyme, lineCt)
             if anteRhyme < lineCt:  #  If you hit a matching letter that comes before current line, grab rhys from that line. Otherwise, go straight to forming a metered line
                 rhymeLine = stanza[anteRhyme]
                 lastWordIndex = int(0)
@@ -618,19 +637,21 @@ def stanzaGovernor(usedList):
                         print(lineno(), "iE:", rhymeLine, lastWordIndex)
                         return  [], [], True  #  redButton event
                 rhymeList = rhymeGrab(rhymeWord)
+                rhymeThisLine = True
                 if len(rhymeList) > 0:  #  Ensure that this produced some rhymes
-                    newLine, usedList, redButton = lineGovernor(qAnteLine, usedList, expressList, rhymeList, empMap[lineCt])  #  If so, we try to create rhyming lines
+                    newLine, usedList, redButton = lineGovernor(qAnteLine, usedList, expressList, rhymeThisLine, rhymeList, empMap[lineCt])  #  If so, we try to create rhyming lines
                 else:  #  Our lines created nothing, so we hit a redbutton event
                     return [], [], True
             else:  #  Then you don't need rhymes
                 rhymeList = []
-                newLine, usedList, redButton = lineGovernor(qAnteLine, usedList, expressList, rhymeList, empMap[lineCt])  #                
+                print(lineno(), qAnteLine, usedList, expressList, False, rhymeList, empMap[lineCt])
+                newLine, usedList, redButton = lineGovernor(qAnteLine, usedList, expressList, False, rhymeList, empMap[lineCt])  #                
         elif metSwitch == False:
             newLine, usedList, redButton = plainLinerLtoR(qAnteLine, usedList, expressList, rhymeList, empMap[lineCt])
         else:
-            newLine, usedList, redButton = lineGovernor(qAnteLine, usedList, expressList, [], empMap[lineCt])
+            newLine, usedList, redButton = lineGovernor(qAnteLine, usedList, expressList, rhymeThisLine, [], empMap[lineCt])
         if redButton == True:  #  Not an elif because any of the above could trigger this; must be separate if statement
-            newLine, qAnteLine, usedList, lineCt == vetoStanza([])
+            stanza, qAnteLine, usedList, lineCt, rhymeThisLine, redButton = vetoStanza([])
         elif len(newLine) > 0:  #  Line-building functions will either return a valid, nonzero-length line, or trigger a subtraction in the stanza with empty list
             stanza.append(newLine)
             qAnteLine = []  #  Rebuild qAnteLine, meant to direct the proceeding line(s)
@@ -641,7 +662,7 @@ def stanzaGovernor(usedList):
         elif len(stanza) > 0:  #  Check if the stanza is nonzero-length, otherwise there's nothing to subtract, resulting in an error
             stanza = stanza[:-1]
         else:  #  Redundant, as the stanza should logically be vetoed already, but just to clean house
-            newLine, qAnteLine, usedList, lineCt == vetoStanza([])
+            stanza, qAnteLine, usedList, lineCt, rhymeThisLine, redButton = vetoStanza([])
         lineCt = len(stanza)  #  Count the length of the stanza, provided no redButton events occurred...
 
     return stanza, usedList, redButton
@@ -714,6 +735,14 @@ def main__init():
     empMode = 0
 
     contractionFile = open('data/USen/contractionList.txt', 'r')
+    global contractionDic, contractionList  #  These are immutable and should be accessed wherever
+    contractionDic = {}  #  Use a dictionary to look up contraction switches
+    contractionList = []  #  Use a list to check if the contraction exists (circumvents excepting KeyErrors)
+    for line in contractionFile:  #  Makes a dictionary of contractions
+        contractionDic[line[0]] = line[1]
+        contractionList.append(line[0])
+        
+        
 
     rSyls = 2
 
