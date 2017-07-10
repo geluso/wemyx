@@ -735,12 +735,14 @@ def main__init():
     empMode = 0
 
     contractionFile = open('data/USen/contractionList.txt', 'r')
+    contractionSwitch = csv.reader(open('data/USen/contractionSwitches.csv', 'r+'))
     global contractionDic, contractionList  #  These are immutable and should be accessed wherever
     contractionDic = {}  #  Use a dictionary to look up contraction switches
     contractionList = []  #  Use a list to check if the contraction exists (circumvents excepting KeyErrors)
     for line in contractionFile:  #  Makes a dictionary of contractions
-        contractionDic[line[0]] = line[1]
-        contractionList.append(line[0])
+        contractionList.append(line)
+    for line in contractionSwitch:
+        contractionDic[line[0]] = line[1] 
         
         
 
