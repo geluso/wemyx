@@ -15,6 +15,7 @@
 #  p - May be thought as the phonetic line, or the printed line. This is what will be shown as end-product
 #  q - May be thought as the quantum line, because it enjoins both p and r lines in a sort of superposition to be analyzed separately and together
 #  r - May be thought as the retracted or referral line, because it shows what the pLine says alternatively
+#  proxData is the variable that hold the data to create the Markov chain [proxLineNum, proxLineNumList, proxNum, proxNumList]
 #  qAnteData = [qAnteLine], qAnteBlackList, qAntePopList]
 
 
@@ -300,13 +301,13 @@ def loadmakeData(textFile):
 def proxDataReboot(pLine):  # Recreates the proxData used in proxWords()
     pCt = int(0)
     proxNumList = []
-    pLineNList = []
+    proxLineNumList = []
     while pCt < len(pLine):
         proxNumList.append(pCt)
-        pLineNList.insert(0, pCt)
+        proxLineNumList.insert(0, pCt)
         pCt+=1
     pLNi = pCt
-    return [pLineNList, pLNi, proxNumList]
+    return [proxLineNumList, pLNi, proxNumList]
 
 
 def contractionAction(contraction, qLine):  #  Switches contractions between phonetic line and real/grammar line
@@ -351,70 +352,48 @@ def rhymeGrab(pWord):
         return rhyDic(pWord)
 
 
-def removeWordL(superPopList, superBlackList, qLine):  #  Remove the leftmost word from line
+def removeWordL(superPopList, qLine):  #  Remove the leftmost word from line
     return data
 
 
-def removeWordR(superPopList, superBlackList, qLine):  #  Remove the rightmost word from line
+def removeWordR(superPopList, qLine):  #  Remove the rightmost word from line
     proxNumList.append(proxNum)
-    pLineNum = pLineNList[0] + 1
-    pLineNList.insert(0, pLineNum)
+    proxLineNum = proxLineNumList[0] + 1
+    proxLineNumList.insert(0, proxLineNum)
 
 
-def acceptWordL(pLine, proxData, nextWord, rhymeList, superPopList, superBlackList):  #  Add the rightmost word to line
+def acceptWordL(qLine, nextWord, proxData):  #  Add the rightmost word to line
 
 ##  INVERT THESE VALUES
 
-    print('acceptWord:', pLine, '|', nextWord, len(superPopList))
+    print('acceptWord:', qLine, '|', nextWord, len(superPopList))
+    proxNum, proxLineNum, proxLineNumList, proxNumList = proxData
     pLine.append(nextWord)
     if len(proxNumList) > 0:
         proxNum = proxNumList[-1] + 1
     else:
         proxNum = 0
     proxNumList.append(proxNum)
-    pLineNum = pLineNList[0] + 1
-    pLineNList.insert(0, pLineNum)
-    superBlackList.append([])
-    burnList = []
-    jumpList = proxP2[pLine[-1]]
-    for all in proxNumList[:len(pLine)]:
-        screenList = proxPlusLista[all+1][pLine[all]]
-        if all not in jumpList:
-            burnList.append(all)
-    for all in burnList:
-        if all in jumpList:
-            jumpList.remove(all)
-    jumpProxList.append(jumpList)
-    print('len(superPopList):', len(superPopList))
-
-##
-    
-    return pLine, pLineNum, pLineNList, proxNum, proxNumList, superPopList, expressList, superBlackList, jumpProxList
+    proxLineNum = proxLineNumList[0] + 1
+    proxLineNumList.insert(0, proxLineNum)
+    proxData = [proxNum, proxLineNum, proxLineNumList, proxNumList]
+    return qLine, proxData
 
 
-def acceptWordR(pLine, proxData, nextWord, rhymeList, superPopList, superBlackList):  #  Add word to right side of line
-    print('acceptWord:', pLine, '|', nextWord, len(superPopList))
-    pLine.append(nextWord)
+def acceptWordR(qLine, nextWord, proxData):  #  Add word to right side of line
+    print('acceptWordR-in:', qLine, '|', nextWord, proxData)
+    proxNum, proxLineNum, proxLineNumList, proxNumList = proxData  #  Unpack and repack as 'proxData' because the variable is easier to see in code
+    qLine.append(nextWord)
     if len(proxNumList) > 0:
         proxNum = proxNumList[-1] + 1
     else:
         proxNum = 0
     proxNumList.append(proxNum)
-    pLineNum = pLineNList[0] + 1
-    pLineNList.insert(0, pLineNum)
-    superBlackList.append([])
-    burnList = []
-    jumpList = proxP2[pLine[-1]]
-    for all in proxNumList[:len(pLine)]:
-        screenList = proxPlusLista[all+1][pLine[all]]
-        if all not in jumpList:
-            burnList.append(all)
-    for all in burnList:
-        if all in jumpList:
-            jumpList.remove(all)
-    jumpProxList.append(jumpList)
-    print('len(superPopList):', len(superPopList))
-    return pLine, pLineNum, pLineNList, proxNum, proxNumList, superPopList, expressList, superBlackList, jumpProxList
+    proxLineNum = proxLineNumList[0] + 1
+    proxLineNumList.insert(0, proxLineNum)
+    proxData = [proxNum, proxLineNum, proxLineNumList, proxNumList]
+    print('acceptWordR-out:', qLine, '|', nextWord, proxData)
+    return qLine, proxData, superPopList
 
 
 def listSorter(mainList, frontList, rearList):  # places words in the front or back of a list
@@ -435,14 +414,14 @@ def listSorter(mainList, frontList, rearList):  # places words in the front or b
     return organizedList
 
 
-def superPopListMaker(superPopList, superBlackList, xLine, proxLineData, expressList): # 
+def superPopListMaker(superPopList, xLine, proxLineData, expressList): #  Creates a list-of-lists to pull from
     print(lineno(), 'superPopMaker begin')
     xLineLen = len(xLine)
     if xLineLen == 0:  #  If we've received a totally empty line, populate it with firstWords, but not directly or corrupt global bank
         startList = firstWordSuperPopList()
         return [startList]
     keepList = proxP1[xLine[-1]]
-    for each in pLineNumList:
+    for each in proxLineNumList:
         testList = proxLibStuff[indexes]  #  The use of proxData comes into play by scanning the proxLibs and returning lists of words
         for all in keepList:
             if all not in testList or all in superBlackList[someIndex]:
@@ -457,12 +436,17 @@ def superPopListMaker(superPopList, superBlackList, xLine, proxLineData, express
     return superPopList
 
 
-def plainDigester():
+
+def plainPopDigester():  #  Digests words from list without regard to their syllables or meter
     return doo, doo
 
 
-def metPopDigester(empLine, superPopList, qAnteLine, qLine, proxData):
-    pLEmps = gF.empsLine(qLine[0], emps, doubles)
+def empPopDigester():  #  Digests words based on the length of their syllables
+    return doo, doo
+
+
+def metPopDigester(empLine, superPopList, qAnteLine, qLine, proxData):  #  Digests words that fit a particular meter
+    pLEmps = gF.empsLine(qLine[0], emps, doubles)  #  Using 'p' prefix because measuring 'phonetic'
     while len(superPopList[-1]) > 0:
         pWord = superPopList[-1].pop(superPopList[-1].index(random.choice(superPopList[-1])))
         pWEmps = gF.empsLine([pWord], emps, doubles)
@@ -470,16 +454,17 @@ def metPopDigester(empLine, superPopList, qAnteLine, qLine, proxData):
         if len(testEmps) <= len(empLine):  #  This is to screen against an error
             if testEmps == empLine[:len(testEmps)]:  #  Check if the word is valid
                 if pWord in contractionList:
-                   qWord = contractionAction(qLine[0], pWord, -1)  #  Adds a contraction to the 
-                   return superPopList, qWord
+                    qWord = contractionAction(qLine[0], pWord, -1)  #  Adds a contraction to the
+                    qLine, proxData = acceptWordR(qLine, qWord, proxData)
+                    return superPopList, qWord, proxData
                 else:
-                    acceptWordR(qWord)
-                    pLine, pLineNum, pLineNList, proxNum, proxNumList, superPopList, expressList, superBlackList, jumpProxList = acceptWordR(qLine)
-                    return superPopList, qLine, proxData  #
+                    qWord = (pWord, pWord)  #  pWord is the same word unless the phonetic data doesn't match the 'real' data
+                    qLine, proxData = acceptWordR(qLine, qWord, proxData)
+                    return superPopList, qWord, proxData  #
         else:
             testEmps = testEmps[:-len(pWEmps)]  #  The word extended the line too far, so subtract it
-    return superPopList, '', proxData  #  If we've run out of words, empty newWord
-
+    return superPopList, '', proxData  #  If we've run out of words, empty newWord will indicate failure
+ 
         
 def firstWordSuperPopList():  #  Creates a superPopList that reloads the global firstWords list
     superPopList = [[]]
@@ -518,7 +503,7 @@ def plainLinerRtoL(vars):
     data
 
 
-def meterLiner(qAnteLine, usedList, expressList, rhymeList, proxData, empLine):
+def meterLiner(qAnteLine, usedList, expressList, rhymeList, proxData, empLine):  #  
     print(lineno(), 'meterLiner start\nPrevious:', qAnteLine, '\nempLine:', empLine)
     qLine, runLine, pLEmps = [[],[]], [], []
     for all in qAnteLine[0]:  #  qAnteLine  
@@ -536,7 +521,7 @@ def meterLiner(qAnteLine, usedList, expressList, rhymeList, proxData, empLine):
             print(lineno(), 'met if1')
             runLine = runLine + qLine[0]  #  Maybe qLine[0] is still nothing, but the whole stanza is one continuous line, in a sense of thinking
             superPopList = superPopListMaker(runLine)
-            superPopList, qWord = superPopListDigester(superPopList, run)
+            superPopList, qWord = popListDigester(superPopList, run)
             runLine = wordTester(empKey, runLine, qWord)
             if len(qWord[0]) == 0:  #  No word was found
                 runLine, superPopList, proxData = subtractWordL(superPopList, runLine, etc)
@@ -796,10 +781,10 @@ main__init() #  and now that everything's in place, set it off!
 
 ##                    while runCt < len(pLine):
 ##                        proxNumList.append(runCt)
-##                        pLineNList.insert(0, runCt)
+##                        proxLineNumList.insert(0, runCt)
 ##                        pLNi = 0
 ##                        runCt+=1
-##                    superPopList, firstPopList, proxNumList, pLNi, pLineNList, jumpProxList, runLine = proxWords(proxList, pLine, runLine, proxNumList, pLNi, pLineNList, proxMinDial, proxPlusLista, superPopList, lastList, superBlackList, allLinesLine, preferredList, jumpProxList) # gramProxPlusLista
+##                    superPopList, firstPopList, proxNumList, pLNi, proxLineNumList, jumpProxList, runLine = proxWords(proxList, pLine, runLine, proxNumList, pLNi, proxLineNumList, proxMinDial, proxPlusLista, superPopList, lastList, superBlackList, allLinesLine, preferredList, jumpProxList) # gramProxPlusLista
 ##                    superBlackList.append([])
 ##                    printSuperLines(pLine, superPopList, superBlackList, firstPopList, jumpProxList)
 ##                    pLine = pLine[len(runLine):]
