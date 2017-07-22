@@ -1,3 +1,12 @@
 If there's special data that a source text might need, here's one spot where you could place it. So far, it just contains a list of words in the English language that have multiple pronunciations.
 
 USen is the folder that contains all of the relevant data for American English, as gleaned from the NLTK for Python3. A version for UK English is pending.
+
+Two-letter whitelist found here:
+http://scrabble.merriam.com/2-letter-words
+
+Popular first names:
+Female: http://deron.meranda.us/data/census-dist-female-first.txt (4275 entries)
+Male: http://deron.meranda.us/data/census-dist-male-first.txt (1219 entries)
+Both: http://deron.meranda.us/data/census-derived-all-first.txt
+
