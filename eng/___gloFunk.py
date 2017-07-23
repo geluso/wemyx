@@ -201,7 +201,44 @@ def globalOpen(name, mode):
                 lib[line[0]] = list(line[1])
             elif mode == 'string':
                 lib[line[0]] = str(line[1])
+    doubSame = int(0)
+    doubDiff = int(0)
+    yaFound = []
+    newAdds = {}  #  This section will find words with multiple pronounciations and create an entry to avoid KeyErrors later
+    for key, val in lib.items():
+        if '(' in key and key[:-3] not in yaFound:
+            diffInt = int(0)
+            diffEmps = []
+            try:
+                while diffInt < 5:
+                    diffEmps.append(lib[key[:-3]+'('+str(diffInt)+')'])
+                    diffInt+=1
+            except KeyError:
+                try:
+                    diffInt = len(diffEmps)
+                    while diffInt > 0:
+                        diffInt-=1
+                        if lib[key[:-3]+'('+str(diffInt)+')'] != lib[key[:-3]+'(0)']:
+                            #print('differnt:', lib[key[:-3]+'('+str(diffInt)+')'], lib[key[:-3]+'(0)'])
+                            doubDiff+=1
+                            yaFound.append(key[:-3])
+                            break
+                    if diffInt == 0:
+                        #print('nodiff:', key[:-3])
+                        newAdds[key[:-3]] = lib[key[:-3]+'(0)']
+                        doubSame+=1
+                        yaFound.append(key[:-3])
+                    continue
+                except KeyError:
+                    #print('failed:', key)
+                    continue
+    for key, val in newAdds.items():
+        lib[key] = val
 
+    print('\n\nresults:\ndoubsame:', doubSame, '\ndoubDiff:', doubDiff)
+    #input('continue...')
+                
+        
     return lib
 
 def globalClose(lib, name):
@@ -258,6 +295,7 @@ def dataLine(pLine, dic):
         
 
 def empsLine(pLine, emps, doubles):
+    print('gF empsLine:', pLine)
 
     empsLine = []
     #empHost = pLine.split(' ')
@@ -266,7 +304,7 @@ def empsLine(pLine, emps, doubles):
 ##            pLine.remove(all)
     for all in pLine:
         if (all not in silentPunx) and (len(all) > 0):
-            eWord = all.lower()
+            eWord = all.lower()  #  Called 'eWord' because of 'emps'
             try:
                 emps[eWord]
             except KeyError:
@@ -280,28 +318,41 @@ def empsLine(pLine, emps, doubles):
                 except IndexError:
                     print('wut?', eWord)
                     continue
-            if all != '':
+            if all != '':  #  First attempt to weed out null-words 
                 eWord = all.lower()
                 for each in silentPunx:
                     if each in eWord:
                         eWord = eWord.replace(each, '')
-                if len(eWord) > 0:
-                    if eWord in doubles:
-                        doubInt = int(0)
-                        eWord = eWord+'('+str(doubInt)+')'
-                        testEmps = empsLine+emps[eWord]
-                        while testEmps != empKeyLet[:len(testEmps)]:
-                            try:
-                                #print('testEmps:', testEmps)
-                                testEmps = testEmps[:-len(emps[eWord])]
-                                doubInt+=1
-                                eWord = eWord[:-3]+'('+str(doubInt)+')'
-                                testEmps = empsLine+emps[eWord]
-                            except KeyError:
-                                eWord = eWord[:-3]+'(0)'
-                                continue
-                    for each in emps[eWord]:
-                        empsLine.append(each)
+                if len(eWord) > 0:  #  Second attempt to weed out null-words
+                    try:
+                        for each in emps[eWord]:
+                            empsLine.append(each)
+                    except KeyError:
+                        try:
+                            if eWord in doubles:
+                                doubInt = int(0)  #  This only tries one pronounciation of a word, for the sake of ease
+                                eWord = eWord+'('+str(doubInt)+')'
+                                for each in emps[eWord]:
+                                    empsLine.append(each)
+                        except:
+                            print('\nglofuckt...\n')
+                            return []
+                    
+##                    if eWord in doubles:
+##                        doubInt = int(0)  #  This only tries one pronounciation of a word, needs to be changed
+##                        eWord = eWord+'('+str(doubInt)+')'
+##                        testEmps = empsLine+emps[eWord]
+##                        while testEmps != empKeyLet[:len(testEmps)]:
+##                            try:
+##                                #print('testEmps:', testEmps)
+##                                testEmps = testEmps[:-len(emps[eWord])]
+##                                doubInt+=1
+##                                eWord = eWord[:-3]+'('+str(doubInt)+')'
+##                                testEmps = empsLine+emps[eWord]
+##                            except KeyError:
+##                                eWord = eWord[:-3]+'(0)'
+##                                continue
+
     return empsLine
 
 
