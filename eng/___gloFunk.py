@@ -322,9 +322,9 @@ def empsLine(pLine, emps, doubles):
                     empsLine.append(emps[eWord])
                     #print('empsLine0')
                 except KeyError:
-                    empsLine = []
+                    empsLine.append('2')
                     print('kE empsLine:', all)
-                    break
+                    continue
                 except IndexError:
                     print('wut?', eWord)
                     continue
