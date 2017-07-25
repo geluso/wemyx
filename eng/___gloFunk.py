@@ -235,7 +235,7 @@ def globalOpen(name, mode):
     for key, val in newAdds.items():
         lib[key] = val
 
-    print('\n\nresults:\ndoubsame:', doubSame, '\ndoubDiff:', doubDiff)
+    print('\nresults:\ndoubsame:', doubSame, '\ndoubDiff:', doubDiff)
     #input('continue...')
                 
         
@@ -295,64 +295,41 @@ def dataLine(pLine, dic):
         
 
 def empsLine(pLine, emps, doubles):
-    print('gF empsLine:', pLine)
-
+    #print('gF empsLine:', pLine)
     empsLine = []
     #empHost = pLine.split(' ')
-##    for all in silentPunx:
-##        while all in pLine:
-##            pLine.remove(all)
     for all in pLine:
-        if (all not in silentPunx) and (len(all) > 0):
-            eWord = all.lower()  #  Called 'eWord' because of 'emps'
+        eWord = all.lower()
+        if eWord in doubles:
             try:
-                emps[eWord]
+                for each in emps[eWord]:
+                    empsLine.append(each)
+            except KeyError:
+                try:
+                    doubInt = int(0)  #  This only tries one pronounciation of a word, for the sake of ease
+                    eWord = eWord+'('+str(doubInt)+')'
+                    for each in emps[eWord]:
+                        empsLine.append(each)
+                except:
+                    print('gF gotfukt')
+        elif (all not in silentPunx) and (len(all) > 0):
+            try:
+                for each in emps[eWord]:
+                    empsLine.append(each)
             except KeyError:
                 try:
                     eWord = eWord[0].upper()+eWord[1:]
-                    emps[eWord]
+                    empsLine.append(emps[eWord])
+                    #print('empsLine0')
                 except KeyError:
                     empsLine = []
-                    #print('kE empsLine:', all)
+                    print('kE empsLine:', all)
                     break
                 except IndexError:
                     print('wut?', eWord)
                     continue
-            if all != '':  #  First attempt to weed out null-words 
-                eWord = all.lower()
-                for each in silentPunx:
-                    if each in eWord:
-                        eWord = eWord.replace(each, '')
-                if len(eWord) > 0:  #  Second attempt to weed out null-words
-                    try:
-                        for each in emps[eWord]:
-                            empsLine.append(each)
-                    except KeyError:
-                        try:
-                            if eWord in doubles:
-                                doubInt = int(0)  #  This only tries one pronounciation of a word, for the sake of ease
-                                eWord = eWord+'('+str(doubInt)+')'
-                                for each in emps[eWord]:
-                                    empsLine.append(each)
-                        except:
-                            print('\nglofuckt...\n')
-                            return []
-                    
-##                    if eWord in doubles:
-##                        doubInt = int(0)  #  This only tries one pronounciation of a word, needs to be changed
-##                        eWord = eWord+'('+str(doubInt)+')'
-##                        testEmps = empsLine+emps[eWord]
-##                        while testEmps != empKeyLet[:len(testEmps)]:
-##                            try:
-##                                #print('testEmps:', testEmps)
-##                                testEmps = testEmps[:-len(emps[eWord])]
-##                                doubInt+=1
-##                                eWord = eWord[:-3]+'('+str(doubInt)+')'
-##                                testEmps = empsLine+emps[eWord]
-##                            except KeyError:
-##                                eWord = eWord[:-3]+'(0)'
-##                                continue
 
+    #print('gF gotHere', empsLine)
     return empsLine
 
 
