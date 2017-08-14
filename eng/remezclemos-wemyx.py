@@ -280,8 +280,19 @@ def acceptWordR(superBlackList, qLineIndexList, proxDicIndexList, qLine, nextWor
 
 def listSorter(mainList, frontList, rearList):  # places words in the front or back of a list
     switchList = []
+##    for all in frontList:
+##        switchList.append(all)
+##    for all in mainList:
+##        if all not in frontList and all not in rearList:
+##            switchList.append(all)
+##    for all in allPunx:
+##        if all in mainList:  #  Place all punctuation into lowest priority (for now)
+##            rearList.append(all)
+##    for all in rearList:
+##        if all not in frontList and all not in mainList:
+##            switchList.append(all)            
     for all in allPunx:
-        if all in mainList:  #  Place all punctuation into lowest priority (for now)
+        if all in mainList:
             rearList.append(all)
     for all in rearList:
         if all in mainList:
@@ -355,12 +366,20 @@ def superPopListMaker(pLEmps, superPopList, superBlackList, expressList, qLineIn
                         #qLineIndexLen = len(qLineIndexList)  #  Use this to rebuild testString without words that have failed
                         for all in qLineIndexList:  #  Build a line with words already used
                             testString = testLine[0][all]+' '+testString  #  Build backwards because we trim failed lines from the front
+                        for all in allPunx:
+                            testString = testString.replace(' '+all, all)  #  Get rid of whitespace characters in front of puncuation
                         for all in keepList:
-                            testString+=all+' '  #  Add the new word to the string, plus a space so we don't see a false positive with a partial word ('you' mistaken for 'your')
+                            if all not in allPunx:
+                                testString+=all+' '  #  Add the new word to the string, plus a space so we don't see a false positive with a partial word ('you' mistaken for 'your')
+                            else:
+                                testString = testString[:-1]+all+' '  #  Shave off a whitespace character because puncuation is attached
                             print(lineno(),  testString)
                             if (all not in testList) or (testString not in rawText) or (all in superBlackList[qLineIndexList[0]-len(runLine[0])]):  #  Add blackList screening later
                                 burnList.append(all)  #  Screen it with a burnList so we don't delete as we iterate thru list
-                            testString = testString[:-(len(all)+1)]  #  Remove the word and whitespace to prepare for another testString addition
+                            if all in allPunx:  #  Add whitespace character if not puncuation, because we subtracted one earlier
+                                testString = testString[:-2]+' '
+                            else:
+                                testString = testString[:-(len(all)+1)]  #  Remove the word to prepare for another testString addition
                         print(lineno(), 'len(keepList):', len(keepList), 'len(burnList):', len(burnList))
                         if len(keepList) > 0:
                             for all in burnList:
@@ -410,15 +429,15 @@ def metPopDigester(empLine, superPopList, superBlackList, qLineIndexList, proxDi
         print(lineno(), 'mPD not aligned:', "len(superPopList):", len(superPopList), "| len(superPopList[-1]):", len(superPopList[-1]), qLine)
     print(lineno(), "len(superPopList):", len(superPopList), "| len(superPopList[-1]):", len(superPopList[-1]), 'qLine:', qLine)
     while len(superPopList[-1]) > 0:
-        #print(lineno(), "len(superPopList[-1]):", len(superPopList[-1]))
+        print(lineno(), "len(superPopList[-1]):", len(superPopList[-1]))
         pWord = superPopList[-1].pop(0)  #  Used random in past, but organized lists put preferential stuff in front / superPopList[-1].index(random.choice(superPopList[-1]))
         pWEmps = gF.empsLine([pWord], emps, doubles)
         if len(pWEmps) != 0 and pWord not in allPunx:  #  Probably a KeyError:
             testEmps = pLEmps + pWEmps
             if len(testEmps) <= len(empLine):  #  This is to screen against an error
-                #print(lineno(), 'mPD testEmp0')
+                print(lineno(), 'mPD testEmp0 |', pWord)
                 if testEmps == empLine[:len(testEmps)]:  #  Check if the word is valid
-                    #print(lineno(), 'mPD testEmp1')
+                    print(lineno(), 'mPD testEmp1')
                     if pWord in contractionList:
                         print(lineno(), 'mPD - if')
                         qWord = contractionAction(qLine[0], pWord, -1)  #  Adds a contraction to the
@@ -433,7 +452,14 @@ def metPopDigester(empLine, superPopList, superBlackList, qLineIndexList, proxDi
                         return testEmps, superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, runLine
             else:
                 print(lineno(), 'fuckt')
-                pLEmps, superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, runLine = removeWordR(pLEmps, superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, runLine)              
+                pLEmps, superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, runLine = removeWordR(pLEmps, superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, runLine)
+        elif pWord in allPunx:
+            for all in allPunx:
+                print(lineno(), all, qLine[0][-(min(punxProxNum, len(qLine[0])))])
+                if pWord in allPunx and all not in qLine[0][-(min(punxProxNum, len(qLine[0]))):]:  #  Will discriminate any puncuation within the designated length away
+                    superBlackList, qLineIndexList, proxDicIndexList, qLine = acceptWordR(superBlackList, qLineIndexList, proxDicIndexList, qLine, (pWord, pWord))
+                    print(lineno(), 'mPD acceptR', qLine, pLEmps)
+                    return pLEmps, superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, runLine
     print(lineno(), "len(superPopList):", len(superPopList), "| len(superPopList[-1]):", len(superPopList[-1]), 'qLine:', qLine)
     if len(qLine[0]) > 0 or len(runLine[0]) > 0: #and len(qLine[0]) > proxMinDial:  #  If we have enough words, then we can remove rightmost element and metadata, then try again
         try:
@@ -729,13 +755,13 @@ def main__init():
 
 ##    values = guiInterface()
     global rhyDic
-    rhyDic = {}
+    rhyDic = defaultdict(list)
 
     global poemQuota, stanzaQuota    
     poemQuota = 20
     stanzaQuota = 4
      
-    textFile = 'shkspr'
+    textFile = 'bibleZ'
     global rawText
     rawText = str(open('data/textLibrary/'+textFile+'.txt', 'r', encoding='latin-1').read())
 
@@ -743,8 +769,8 @@ def main__init():
     global proxM1, proxM2, proxM3, proxM4, proxM5, proxM6, proxM7, proxM8, proxM9, proxM10, proxM11, proxM12, proxM13, proxM14, proxM15, proxM16, proxM17, proxM18, proxM19, proxM20
     global proxPlusLista, proxMinusLista, proxLib # gramProxLib, gramProxPlusLista, gramProxMinusLista
     #  These dictionaries contain lists of words that come after 
-    proxP1, proxP2, proxP3, proxP4, proxP5, proxP6, proxP7, proxP8, proxP9, proxP10, proxP11, proxP12, proxP13, proxP14, proxP15, proxP16, proxP17, proxP18, proxP19, proxP20 = {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {} 
-    proxM1, proxM2, proxM3, proxM4, proxM5, proxM6, proxM7, proxM8, proxM9, proxM10, proxM11, proxM12, proxM13, proxM14, proxM15, proxM16, proxM17, proxM18, proxM19, proxM20 = {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
+    proxP1, proxP2, proxP3, proxP4, proxP5, proxP6, proxP7, proxP8, proxP9, proxP10, proxP11, proxP12, proxP13, proxP14, proxP15, proxP16, proxP17, proxP18, proxP19, proxP20 = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list) 
+    proxM1, proxM2, proxM3, proxM4, proxM5, proxM6, proxM7, proxM8, proxM9, proxM10, proxM11, proxM12, proxM13, proxM14, proxM15, proxM16, proxM17, proxM18, proxM19, proxM20 = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
     #  The dictionaries are organized into lists that are accessed by index. Useful in while loops with ascending/descending numbers
     proxPlusLista = [proxP1, proxP2, proxP3, proxP4, proxP5, proxP6, proxP7, proxP8, proxP9, proxP10, proxP11, proxP12, proxP13, proxP14, proxP15, proxP16, proxP17, proxP18, proxP19, proxP20]
     proxMinusLista = [proxM1, proxM2, proxM3, proxM4, proxM5, proxM6, proxM7, proxM8, proxM9, proxM10, proxM11, proxM12, proxM13, proxM14, proxM15, proxM16, proxM17, proxM18, proxM19, proxM20]
@@ -768,7 +794,7 @@ def main__init():
     contractionFile = open('data/USen/contractionList.txt', 'r')
     contractionSwitch = csv.reader(open('data/USen/contractionSwitches.csv', 'r+'))
     global contractionDic, contractionList  #  These are immutable and should be accessed wherever
-    contractionDic = {}  #  Use a dictionary to look up contraction switches
+    contractionDic = defaultdict(list)  #  Use a dictionary to look up contraction switches
     contractionList = []  #  Use a list to check if the contraction exists (circumvents excepting KeyErrors)
     for line in contractionFile:  #  Makes a dictionary of contractions
         contractionList.append(line)
