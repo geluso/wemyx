@@ -343,16 +343,25 @@ def superPopListMaker(pLEmps, superPopList, superBlackList, expressList, qLineIn
         print(lineno(), 'sPM - len(testLine) >= 1', qLineIndexList, proxDicIndexList)
         try:
             while len(qLineIndexList) > 0:
-                keepList = proxP1[testLine[0][-1]]  #  Practically an 'else' clause, because the 'if' above returns an answer
+                for all in proxP1[testLine[0][-1]]:
+                    keepList.append(all)  #  Practically an 'else' clause, because the 'if' above returns an answer
                 if len(qLineIndexList) > 1:  #  Only keep going if we need more than 2 words analyzed
                     for each in proxDicIndexList[1:]:  #  Skip first indexNum, we already found it
                         testList = proxPlusLista[each][testLine[0][qLineIndexList[each]]]  #  Scans approximate words with indexes
                         burnList = []  #  burnList holds words that don't match with mutual proxLists
-                        #print(lineno(), qLine[0][qLineIndexList[each]], qLineIndexList[each], each, '\nkeepList:', keepList, '\ntestList:', testList)
+                        testString = str()  #  Look for that same string in the rawText
+                        print(lineno(), each, len(superBlackList))
+                        print(lineno(), superBlackList[qLineIndexList[0]-len(runLine[0])])
+                        #qLineIndexLen = len(qLineIndexList)  #  Use this to rebuild testString without words that have failed
+                        for all in qLineIndexList:  #  Build a line with words already used
+                            testString = testLine[0][all]+' '+testString  #  Build backwards because we trim failed lines from the front
                         for all in keepList:
-                            if all not in testList: # or all in superBlackList[each+1]:  #  Add blackList screening later
+                            testString+=all+' '  #  Add the new word to the string, plus a space so we don't see a false positive with a partial word ('you' mistaken for 'your')
+                            print(lineno(),  testString)
+                            if (all not in testList) or (testString not in rawText) or (all in superBlackList[qLineIndexList[0]-len(runLine[0])]):  #  Add blackList screening later
                                 burnList.append(all)  #  Screen it with a burnList so we don't delete as we iterate thru list
-                        #print(lineno(), 'len(keepList):', len(keepList), 'len(burnList):', len(burnList))
+                            testString = testString[:-(len(all)+1)]  #  Remove the word and whitespace to prepare for another testString addition
+                        print(lineno(), 'len(keepList):', len(keepList), 'len(burnList):', len(burnList))
                         if len(keepList) > 0:
                             for all in burnList:
                                 keepList.remove(all)
@@ -430,7 +439,8 @@ def metPopDigester(empLine, superPopList, superBlackList, qLineIndexList, proxDi
         try:
             print(lineno(), 'snipLine', qLine, '|', runLine)
             pLEmps, superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, runLine = removeWordR(pLEmps, superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, runLine)
-            #pLEmps, superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, runLine = metPopDigester(empLine, superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, runLine)
+            #superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, runLine = superPopListMaker(pLEmps, superPopList, superBlackList, [], qLineIndexList, proxDicIndexList, qLine, runLine)
+            pLEmps, superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, runLine = metPopDigester(empLine, superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, runLine)
             return pLEmps, superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, runLine
         except RuntimeError:
             return [], [[]], [[]], [], [], ([],[]), ([],[])  #  redButton situation
@@ -448,7 +458,7 @@ def firstWordSuperPopList(superBlackList):  #  Creates a superPopList that reloa
     for all in firstWords:
         if all not in superBlackList[0]:
             superPopList[0].append(all)
-    print(len(superPopList))
+    print(lineno(), len(superPopList))
     return superPopList
 
 
@@ -567,9 +577,8 @@ def rhymeLiner(empLine, qLineIndexList, proxDicIndexList, qAnteLine, ):
     return qLine, usedList, False
 
 
-def lineGovernor(qAnteLine, usedList, expressList, rhymeThisLine, rhymeList, empLine):
+def lineGovernor(superBlackList, qAnteLine, usedList, expressList, rhymeThisLine, rhymeList, empLine):
     print(lineno(), 'lineGovernor start', rhymeThisLine)
-    superBlackList = [[]]  #  Even if the line is vetoed, record words that didn't work moving forward
     superPopList, superBlackList, rhymeList, qLineIndexList, proxDicIndexList, qLine, qAnteLine, redButton = vetoLine(qAnteLine, superBlackList)  #  Start with empty variables declared. This function is also a reset button if lines are to be scrapped.
     if rhymeThisLine == True:
         print(lineno(), rhymeThisLine)
@@ -602,17 +611,19 @@ def vetoStanza(usedList):
           #stanza, qAnteLine, usedList, lineCt, redButton
 
 
-def removeLine(stanza):
+def removeLine(stanza, superBlackList):
     print(lineno(), 'removeLine in | len(stanza):', len(stanza))
-    stanza = stanza[:-1]
+    stanzaSnip = stanza.pop()  #  Remove the last line of the stanza
+    superBlackList[0].append(stanzaSnip[0][0])  #  Add the first word of the line to blacklist to ensure the repeat doesn't happen
+    print(lineno(), 'removeLine', stanzaSnip, len(superBlackList))
+    qAnteLine = ([],[])  #  Rebuild qAnteLine, meant to direct the proceeding line(s). Returns empty if stanza empty
     if len(stanza) > 1:
-        qAnteLine = ([],[])  #  Rebuild qAnteLine, meant to direct the proceeding line(s)
         for each in stanza[-1][0]:
             qAnteLine[0].append(each)
         for each in stanza[-1][1]:
             qAnteLine[1].append(each)
     print(lineno(), 'removeLine out | len(stanza):', len(stanza))
-    return stanza, qAnteLine
+    return stanza, superBlackList, qAnteLine
 
 
 def acceptLine(stanza, newLine):
@@ -626,6 +637,7 @@ def acceptLine(stanza, newLine):
 def stanzaGovernor(usedList):
     print(lineno(), 'stanzaGovernor begin len(rhyMap):', len(rhyMap), 'len(empMap):', len(empMap))
     expressList = []  #  A list of words that go to the front of the line. Declared and left empty, for now
+    superBlackList = [[]]  #  Must be declared separate from vetoStanza because it starts empty but may hold screened words
     stanza, qAnteLine, usedList, lineCt, rhymeThisLine, redButton = vetoStanza([])  #  Creates a fresh stanza, no usedList
     while lineCt < len(rhyMap):
         if rhySwitch == True:
@@ -647,26 +659,26 @@ def stanzaGovernor(usedList):
                 rhymeThisLine = True
                 if len(rhymeList) > 0:  #  Ensure that this produced some rhymes
                     print(lineno(), 'stanzaGov - rhymer')
-                    usedList, newLine, redButton = lineGovernor(qAnteLine, usedList, expressList, rhymeThisLine, rhymeList, empMap[lineCt])  #  If so, we try to create rhyming lines
+                    usedList, newLine, redButton = lineGovernor(superBlackList, qAnteLine, usedList, expressList, rhymeThisLine, rhymeList, empMap[lineCt])  #  If so, we try to create rhyming lines
                 else:  #  Our lines created nothing, so we hit a redbutton event
                     return [], [], True
             else:  #  Then you don't need rhymes
                 rhymeList = []
                 print(lineno(), 'stanzaGov -', qAnteLine, usedList, expressList, False, rhymeList, empMap[lineCt])
-                usedList, newLine, redButton = lineGovernor(qAnteLine, usedList, expressList, False, rhymeList, empMap[lineCt])  #                
+                usedList, newLine, redButton = lineGovernor(superBlackList, qAnteLine, usedList, expressList, False, rhymeList, empMap[lineCt])  #                
         elif metSwitch == False:
             usedList, newLine, redButton = plainLinerLtoR(qAnteLine, usedList, expressList, rhymeList, empMap[lineCt])
         else:
             print(lineno(), 'stanzaGov - lineGov')
-            usedList, newLine, redButton = lineGovernor(qAnteLine, usedList, expressList, rhymeThisLine, [], empMap[lineCt])
+            superBlackList, usedList, newLine, redButton = lineGovernor(superBlackList, qAnteLine, usedList, expressList, rhymeThisLine, [], empMap[lineCt])
         if redButton == True:  #  Not an elif because any of the above could trigger this; must be separate if statement
             print(lineno(), 'stanzaGov - redButton')
             stanza, qAnteLine, usedList, lineCt, rhymeThisLine, redButton = vetoStanza([])  #  Creates a fresh stanza, no usedList
-        elif len(newLine) > 0:  #  Line-building functions will either return a valid, nonzero-length line, or trigger a subtraction in the stanza with empty list
+        elif len(newLine[0]) > 0:  #  Line-building functions will either return a valid, nonzero-length line, or trigger a subtraction in the stanza with empty list
             print(lineno(), 'stanzaGov - newLine:', newLine)
             stanza, qAnteLine = acceptLine(stanza, newLine)
         elif len(stanza) > 0:  #  Check if the stanza is nonzero-length, otherwise there's nothing to subtract, resulting in an error
-            stanza, qAnteLine = removeLine(stanza)
+            stanza, superBlackList, qAnteLine = removeLine(stanza, superBlackList)
         else:  #  Redundant, as the stanza should logically be vetoed already, but just to clean house
             print(lineno(), 'stanzaGov - vetoStanza')
             stanza, qAnteLine, usedList, lineCt, rhymeThisLine, redButton = vetoStanza([])
@@ -724,6 +736,7 @@ def main__init():
     stanzaQuota = 4
      
     textFile = 'shkspr'
+    global rawText
     rawText = str(open('data/textLibrary/'+textFile+'.txt', 'r', encoding='latin-1').read())
 
     global proxP1, proxP2, proxP3, proxP4, proxP5, proxP6, proxP7, proxP8, proxP9, proxP10, proxP11, proxP12, proxP13, proxP14, proxP15, proxP16, proxP17, proxP18, proxP19, proxP20
