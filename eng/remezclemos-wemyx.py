@@ -734,12 +734,13 @@ def poemGovernor(usedList):  #  Outlines the parameters of the poem
         print(lineno(), 'gotStanza\n')
         for each in stanza:
             thisString = str()
-            for all in each:
-                thisString.append(all+' ')
+            for all in each[0]:
+                thisString= thisString+' '+all
             for all in allPunx:
                 if ' '+all in thisString:
                     thisString.replace(' '+all, all)
             print(thisString)
+        input('press enter to continue')
         print('\n')
         if usedSwitch == 1: 
             usedList = ['']
@@ -773,7 +774,7 @@ def main__init():
     poemQuota = 20
     stanzaQuota = 4
      
-    textFile = 'shkspr'
+    textFile = 'bibleZ'
     global rawText
     rawText = str(open('data/textLibrary/'+textFile+'.txt', 'r', encoding='latin-1').read())
 
