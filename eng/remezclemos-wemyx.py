@@ -10,7 +10,7 @@
 
 #  GLOSSARY
 
-#  Three prefixes are used to distinguish the dual-layer lines. 
+#  Three prefixes are used to distinguish the dual-layer lines.
 #  p - May be thought as the phonetic line, or the printed line. This is what will be shown as end-product
 #  q - May be thought as the quantum line, because it enjoins both p and r lines in a sort of superposition to be analyzed separately and together
 #  r - May be thought as the retracted or referral line, because it shows what the pLine says alternatively
@@ -102,12 +102,13 @@ def loadmakeData(textFile, proxPlusLista, proxMinusLista):
     global firstWords, firstPopList
     firstWords, firstPopList = [], []
     try:
-        print(lineno(), 'begin fwFile load') 
-        firstFile = open('data/textLibrary/textData/'+textFile+'-firstFile.txt', 'r')
+        filepath = 'data/textLibrary/textData/'+textFile+'-firstFile.txt'
+        print(lineno(), 'begin fwFile load', filepath) 
+        firstFile = open(filepath, 'r')
         for line in firstFile:
             firstWords.append(line[:-1])
             firstPopList.append(line[:-1])
-        print(lineno(), 'begin prox load')        
+        print(lineno(), 'begin prox load')
         #  Take a look at gpDataOpener. Consider moving more code there, or bring some here
         proxPlusLista = gF.proxDataOpener(proxPlusLista, 'proxP', textFile)
         proxMinusLista = gF.proxDataOpener(proxMinusLista, 'proxM', textFile)
@@ -202,7 +203,7 @@ def rhymeGrab(pWord):
             rhyData = totalSyls, theseSyls
             if (rSyls <= totalSyls):
                 print(lineno(), 'B')
-                tName, rName = str(totalSyls), str(rSyls)  #  Turn into strings so we can open the file that we need            
+                tName, rName = str(totalSyls), str(rSyls)  #  Turn into strings so we can open the file that we need
                 if totalSyls < 10:
                     tName = '0'+tName
                 if rSyls < 10:
@@ -230,7 +231,7 @@ def removeWordL(superPopList, qLine):  #  Remove the leftmost word from line
 def removeWordR(pLEmps, superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, runLine):  #  Remove the rightmost word from line
     print(lineno(), 'removeWordR-in', qLine)
     
-    if len(qLine[0]) == 0 and len(runLine[0]) > 0:  #  Cut runLine 
+    if len(qLine[0]) == 0 and len(runLine[0]) > 0:  #  Cut runLine
         minusWordX = runLine[0].pop(0)  #  Since the previous line didn't yield any following line
         minusWordX = runLine[1].pop(0)  #  minusWordX just holds whatever is getting popped
 ##        minusWordX = qLine[0].pop(0)
@@ -291,7 +292,7 @@ def listSorter(mainList, frontList, rearList):  # places words in the front or b
 ##            rearList.append(all)
 ##    for all in rearList:
 ##        if all not in frontList and all not in mainList:
-##            switchList.append(all)            
+##            switchList.append(all)
     for all in allPunx:
         if all in mainList:
             rearList.append(all)
@@ -502,7 +503,7 @@ def makeList(listA):  #  Simple function that appends all from one list to other
 #  line building
 
 
-def vetoLine(qAnteLine, superBlackList):  #  Resets values in a line to 
+def vetoLine(qAnteLine, superBlackList):  #  Resets values in a line to
     print(lineno(), 'resetLine, qAnteLine:', qAnteLine)
     runLine = ([],[])
     for each in qAnteLine[0]:  #  Re-create any qAnteLinesuperPopList, superBlackList, qLine, qLineIndexList, proxDicIndexList as a mutable variable
@@ -523,7 +524,7 @@ def plainLinerRtoL(vars):
     data
 
 
-def meterLiner(empLine, superBlackList, usedList, expressList, rhymeList, qLineIndexList, proxDicIndexList, qLine, qAnteLine):  #  
+def meterLiner(empLine, superBlackList, usedList, expressList, rhymeList, qLineIndexList, proxDicIndexList, qLine, qAnteLine):  #
     print(lineno(), 'meterLiner start\nPrevious:', qAnteLine, '\nempLine:', empLine)
     pLEmps, superPopList, runLine = [], [[]], ([],[])
     for each in qAnteLine[0]:  #  qAnteLine gets appended to runLine because this function will be cutting from it when it doesn't yield results
@@ -534,7 +535,7 @@ def meterLiner(empLine, superBlackList, usedList, expressList, rhymeList, qLineI
         print(lineno(), 'empLine:', empLine, 'pLEmps:', len(pLEmps), pLEmps)
         if (len(runLine[0]) == 0) and (len(qLine[0]) == 0):  #  Check if we're starting with a completely empty line, load firstWords to superPopList if so
             print(lineno(), 'met if0')
-            superPopList = firstWordSuperPopList(superBlackList) 
+            superPopList = firstWordSuperPopList(superBlackList)
             pLEmps, superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, qAnteLine = metPopDigester(empLine, superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, qAnteLine)
             if len(superPopList[0]) == 0 and len(qLine[0]) == 0:
                 print(lineno(), 'redButton == True')
@@ -559,7 +560,7 @@ def meterLiner(empLine, superBlackList, usedList, expressList, rhymeList, qLineI
             superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, qAnteLine = superPopListMaker(pLEmps, superPopList, superBlackList, expressList, qLineIndexList, proxDicIndexList, qLine, qAnteLine)
             pLEmps, superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, qAnteLine = metPopDigester(empLine, superPopList, superBlackList, qLineIndexList, proxDicIndexList, qLine, qAnteLine)
             if len(superPopList[0]) == 0 and len(qLine[0]) == 0:  #  Nothing seems to work
-                print(lineno(), 'met if2-if') 
+                print(lineno(), 'met if2-if')
                 return superPopList, superBlackList, usedList, qLine, qAnteLine, True  #  redButton event, as nothing in the list worked
         else:  #  No runLine, no qLine, and superPopList[0] is out of firstWords
             print(lineno(), 'met if3')
@@ -585,20 +586,20 @@ def rhymeLiner(empLine, qLineIndexList, proxDicIndexList, qAnteLine, ):
     print(lineno(), 'rhymeLiner start\nPrevious:', qAnteLine, '\nempLine:', empLine)
     for all in rhymeList:
         expressList.append(all)
-    superPopList, superBlackList, usedList, qLine, qAnteLine, redButton = meterLiner(empLine, usedList, expressList, rhymeList, qLineIndexList, proxDicIndexList, qLine, qAnteLine)  #  First, let it build a line, then if it doesn't happen to rhyme, send it back 
+    superPopList, superBlackList, usedList, qLine, qAnteLine, redButton = meterLiner(empLine, usedList, expressList, rhymeList, qLineIndexList, proxDicIndexList, qLine, qAnteLine)  #  First, let it build a line, then if it doesn't happen to rhyme, send it back
     while qLine[0][-1] not in rhymeList:  #  Unless we find a rhyme to escape this loop, it'll subtract the word every time it gets to the beginning of the loop
         for each in superPopList[-1]:  #  Let's see if there was a rhyme in our popList to add. If we don't return anything, it leaves this section like an moves on, like an implied "else"
             if each in rhymeList:  #  If there's a rhyme, then we can switch out the last word for that instead
                 qLine = subtractWordR(qLine)
                 qLine.append(each)
                 return qLine  #  We've found a rhyming line, and we're done building
-        if len(expressList) > 0:  # 
+        if len(expressList) > 0:  #
             while (len(qAnteLine[0]) > 0) and (len(qLine[0]) > 0):  #  Make sure there are both rhymes and non-empty lines, otherwise it's failed
                 qLine = subtractWordL(qAnteLine)  #  Take away a word from the previous line's beginning, because this line didn't yield anything
                 qLine = subtractWordR(qLine)  #  And take away the word that didn't work
             if len(expressList) > 0:  #  Use the expressList with rhyming words created at the beginning of this function
                 superPopList, superBlackList, usedList, qLine, qAnteLine, redButton = meterLiner(empLine, usedList, expressList, rhymeList, qLineIndexList, proxDicIndexList, qLine, qAnteLine)
-        elif len(qLine[0]) > 0:  #  Subtract from 
+        elif len(qLine[0]) > 0:  #  Subtract from
             qLine = subtractWordR(qLine)
             superPopList, superBlackList, usedList, qLine, qAnteLine, redButton = meterLiner(empLine, usedList, expressList, rhymeList, qLineIndexList, proxDicIndexList, qLine, qAnteLine)  #  Here and below, meterLiner now has an expressList with the rhyming words, to increase their preference
         else:
@@ -694,7 +695,7 @@ def stanzaGovernor(usedList):
             else:  #  Then you don't need rhymes
                 rhymeList = []
                 print(lineno(), 'stanzaGov -', qAnteLine, usedList, expressList, False, rhymeList, empMap[lineCt])
-                usedList, newLine, redButton = lineGovernor(superBlackList, qAnteLine, usedList, expressList, False, rhymeList, empMap[lineCt])  #                
+                usedList, newLine, redButton = lineGovernor(superBlackList, qAnteLine, usedList, expressList, False, rhymeList, empMap[lineCt])  #
         elif metSwitch == False:
             usedList, newLine, redButton = plainLinerLtoR(qAnteLine, usedList, expressList, rhymeList, empMap[lineCt])
         else:
@@ -741,13 +742,13 @@ def poemGovernor(usedList):  #  Outlines the parameters of the poem
                     thisString.replace(' '+all, all)
             print(thisString)
         print('\n')
-        if usedSwitch == 1: 
+        if usedSwitch == 1:
             usedList = ['']
         if redButton == True:
             usedList, lastList, stanzaCt = vetoPoem()
         elif len(stanza) == 0 and len(poem) > 0:
             poem = poem[:-1]
-        else:        
+        else:
             poem.append(stanza)
         if len(poem) == stanzaQuota:
             return poem, usedList
@@ -769,7 +770,7 @@ def main__init():
     global rhyDic
     rhyDic = defaultdict(list)
 
-    global poemQuota, stanzaQuota    
+    global poemQuota, stanzaQuota
     poemQuota = 20
     stanzaQuota = 4
      
@@ -780,8 +781,8 @@ def main__init():
     global proxP1, proxP2, proxP3, proxP4, proxP5, proxP6, proxP7, proxP8, proxP9, proxP10, proxP11, proxP12, proxP13, proxP14, proxP15, proxP16, proxP17, proxP18, proxP19, proxP20
     global proxM1, proxM2, proxM3, proxM4, proxM5, proxM6, proxM7, proxM8, proxM9, proxM10, proxM11, proxM12, proxM13, proxM14, proxM15, proxM16, proxM17, proxM18, proxM19, proxM20
     global proxPlusLista, proxMinusLista, proxLib # gramProxLib, gramProxPlusLista, gramProxMinusLista
-    #  These dictionaries contain lists of words that come after 
-    proxP1, proxP2, proxP3, proxP4, proxP5, proxP6, proxP7, proxP8, proxP9, proxP10, proxP11, proxP12, proxP13, proxP14, proxP15, proxP16, proxP17, proxP18, proxP19, proxP20 = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list) 
+    #  These dictionaries contain lists of words that come after
+    proxP1, proxP2, proxP3, proxP4, proxP5, proxP6, proxP7, proxP8, proxP9, proxP10, proxP11, proxP12, proxP13, proxP14, proxP15, proxP16, proxP17, proxP18, proxP19, proxP20 = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
     proxM1, proxM2, proxM3, proxM4, proxM5, proxM6, proxM7, proxM8, proxM9, proxM10, proxM11, proxM12, proxM13, proxM14, proxM15, proxM16, proxM17, proxM18, proxM19, proxM20 = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
     #  The dictionaries are organized into lists that are accessed by index. Useful in while loops with ascending/descending numbers
     proxPlusLista = [proxP1, proxP2, proxP3, proxP4, proxP5, proxP6, proxP7, proxP8, proxP9, proxP10, proxP11, proxP12, proxP13, proxP14, proxP15, proxP16, proxP17, proxP18, proxP19, proxP20]
@@ -811,7 +812,7 @@ def main__init():
     for line in contractionFile:  #  Makes a dictionary of contractions
         contractionList.append(line)
     for line in contractionSwitch:
-        contractionDic[line[0]] = line[1] 
+        contractionDic[line[0]] = line[1]
         
         
 
