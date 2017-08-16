@@ -103,14 +103,16 @@ def loadmakeData(textFile, proxPlusLista, proxMinusLista):
     firstWords, firstPopList = [], []
     try:
         filepath = 'data/textLibrary/textData/'+textFile+'-firstFile.txt'
-        print(lineno(), 'begin fwFile load', filepath) 
+        print(lineno(), 'begin fwFile load', filepath)
         firstFile = open(filepath, 'r')
         for line in firstFile:
             firstWords.append(line[:-1])
             firstPopList.append(line[:-1])
         print(lineno(), 'begin prox load')
         #  Take a look at gpDataOpener. Consider moving more code there, or bring some here
+        print(lineno(), 'begin prox load proxP')
         proxPlusLista = gF.proxDataOpener(proxPlusLista, 'proxP', textFile)
+        print(lineno(), 'begin prox load proxM')
         proxMinusLista = gF.proxDataOpener(proxMinusLista, 'proxM', textFile)
         print(lineno(), 'prox load complete')
             
