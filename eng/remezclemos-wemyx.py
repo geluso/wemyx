@@ -1,7 +1,3 @@
-
-
-####
-
 #   To-do list:
 #   - ensure halfbeats are viable
 #   - discriminate against capital words
@@ -56,6 +52,17 @@ csv.field_size_limit(int(9999999))
 ##  basic, essential, universal functions & lists
 ##########
 
+# trying to build up global configurable logging function,
+# but I'm not convinced it's actually so useful
+global LOGGING
+LOGGING = True
+
+# log(1)
+# log(1, 2)
+# log(1, "ace", ["bar", "car"], "fffaar")
+def log(*args):
+    if LOGGING:
+        print(*args)
 
 def lineno():     ##  Returns the current line number in our program.
     return inspect.currentframe().f_back.f_lineno
