@@ -196,19 +196,54 @@ def loadmakeData(textFile, proxPlusLista, proxMinusLista):
         # ['', 'the~old~testament~genesis~in~the~beginning~god~created~the~heavens~and~the~earth~.~now~the~earth~was']
         start = time.time()
         print("while loop processing")
+        start2 = None
+        
+        start = time.time()
+        next_words = defaultdict(lambda: defaultdict(list))
         while splitTIndex < len(splitText):
+            if splitTIndex % 10000 == 0:
+                print(splitTIndex / len(splitText))
+            word = splitText[splitTIndex]
+            for proximity_index in range(1, len(proxPlusLista)):
+                next_word_index = splitTIndex + proximity_index
+                if next_word_index < len(splitText):
+                    next_word = splitText[next_word_index]
+                    next_words[word][proximity_index].append(next_word)
+            splitTIndex += 1
+        print("simple tally took:", time.time() - start)
+        sys.exit()
+        
+        while splitTIndex < len(splitText):
+            break
+            if start2 is not None:
+                print((time.time() - start2) * len(splitText))
+            start2 = time.time()
+            
+            if splitTIndex == 1000:
+                input()
             #sys.stdout.write(f"\rwhile splitTIndex < len(splitText) {splitTIndex} {len(splitText)}")
             #sys.stdout.flush()
-            print_progress_bar(splitTIndex, len(splitText))
+            print_progress_bar(splitTIndex, len(splitText) - 1)
             
+            # pWord: the word we're currently building up patterns for
+            # proxMax: the maximum proximity to look after the current word
             pWord = splitText[splitTIndex]
             proxNumerator, proxDicCounter, proxMax = int(1), int(0), len(proxPlusLista)
+            
+            # detect end of sentences and add the next word
+            # to a list of starting words
             if pWord in endPunx:
                 firstWord = splitText[splitTIndex+1]
                 if firstWord not in firstWords:
                     firstWords.append(firstWord)
                     firstFile.write(firstWord+'\n')
+                    
+            print(pWord, proxNumerator, proxDicCounter, proxMax)
+            # while we're looking at words within the specified proximity
+            # and while the words we're looking at don't extend past the end of
+            # the total corpus text word list.
             while proxDicCounter < proxMax and splitTIndex+proxNumerator < splitTLen:
+                # one of the words occuring after the pWord
                 proxWord = splitText[splitTIndex+proxNumerator]
                 if proxWord not in proxPlusLista[proxDicCounter][pWord]:
                     #$ print(lineno(), 'plusadd = proxP:', proxWord, 'pWord:', pWord)

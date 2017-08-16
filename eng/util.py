@@ -1,3 +1,5 @@
+import sys
+
 # Print iterations progress
 def print_progress_bar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 18, fill = '█'):
     """
