@@ -43,8 +43,12 @@ import csv
 import inspect
 import shelve
 import time
+import sys
 from collections import defaultdict
 csv.field_size_limit(int(9999999))
+
+# util is our own self-made file, "util.py"
+from util import print_progress_bar
 
 
 
@@ -66,6 +70,7 @@ def log(*args):
 
 def lineno():     ##  Returns the current line number in our program.
     return inspect.currentframe().f_back.f_lineno
+    
 
 unknownWords = open('data/unknownWords.txt', 'a')
 
@@ -137,13 +142,16 @@ def loadmakeData(textFile, proxPlusLista, proxMinusLista):
         
         def measure_time_taken_to_replace_chars(rawText, char, replacement):
             start = time.time()
-            print("replacing", char, "with", replacement)
+            # commented out print statements because I found these replacements
+            # are all actually very, very fast!
+            #print("replacing", char, "with", replacement)
             #  First clean up some meta-bits that inhibit text digestion
             rawText = rawText.replace(char, replacement)
             end = time.time()
-            print("took", end - start)
+            #print("took", end - start)
             return rawText
         
+        start = time.time()
         rawText = measure_time_taken_to_replace_chars(rawText, '\n', ' ')
         rawText = measure_time_taken_to_replace_chars(rawText, '_', " ")
         rawText = measure_time_taken_to_replace_chars(rawText, '``', '"')
@@ -159,22 +167,40 @@ def loadmakeData(textFile, proxPlusLista, proxMinusLista):
         rawText = rawText.replace("  ", ' ')  #  Then 2 to 1 for good measure, overall 120:1. Every significant token should still have one space between the adjacent
         rawText = rawText.lower()
 
+        end = time.time()
+        print("total text processing time:", end - start)
+        
         #  Tokenizes raw text, grooms into lists of words
+        print("splitting text into list of words")
         splitText = rawText.split(' ')  # The reason for placing a space between all tokens to be grabbed
         splitTIndex = int(0)
         splitTLen = len(splitText)
         proxMaxDial = 19
         #$ print(lineno(), 'begin loadmakeProxLibs()')
         #  Prox and gramprox store Markov chains and build in -Liner() functions
-        #  Libs declared here, made into lists of dics of lists, and called using indices on     #  The maximum length of theseslists are truncated based on the user's initial input
+        #  Libs declared here, made into lists of dics of lists, and called using indices on
+        #  The maximum length of theseslists are truncated based on the user's initial input
         proxPlusLista = proxPlusLista[:proxMaxDial]
         proxMinusLista = proxMinusLista[:proxMaxDial]
         firstWords = []
-        for all in range(0, (len(proxPlusLista))):  #  Now that we've got an exhaustive list of real words, we'll create empty lists for all of them (could this get pre-empted for common words?)
+        
+        # Now that we've got an exhaustive list of real words, we'll create
+        # empty lists for all of them (could this get pre-empted for common words?)
+        print("creating empty lists for each word")
+        for all in range(0, (len(proxPlusLista))):
             for each in splitText:
                 proxPlusLista[all][each] = []
                 proxMinusLista[all][each] = []
+                
+        # sample generated data
+        # ['', 'the~old~testament~genesis~in~the~beginning~god~created~the~heavens~and~the~earth~.~now~the~earth~was']
+        start = time.time()
+        print("while loop processing")
         while splitTIndex < len(splitText):
+            #sys.stdout.write(f"\rwhile splitTIndex < len(splitText) {splitTIndex} {len(splitText)}")
+            #sys.stdout.flush()
+            print_progress_bar(splitTIndex, len(splitText))
+            
             pWord = splitText[splitTIndex]
             proxNumerator, proxDicCounter, proxMax = int(1), int(0), len(proxPlusLista)
             if pWord in endPunx:
@@ -193,6 +219,9 @@ def loadmakeData(textFile, proxPlusLista, proxMinusLista):
                 proxDicCounter+=1
                 proxNumerator+=1
             splitTIndex+=1
+        end = time.time()
+        # usually takes ~6 minutes to generate the file the first time
+        print("while loop stuff took:", end - start)
         print(lineno(), 'writing proxLibs...')
         gpDataWriter(proxPlusLista, 'proxP', textFile)
         gpDataWriter(proxMinusLista, 'proxM', textFile)
