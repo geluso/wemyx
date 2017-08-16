@@ -46,6 +46,7 @@ import time
 import csv
 import inspect
 import shelve
+import time
 from collections import defaultdict
 csv.field_size_limit(int(9999999))
 
@@ -117,14 +118,32 @@ def loadmakeData(textFile, proxPlusLista, proxMinusLista):
         print(lineno(), 'prox load complete')
             
     except FileNotFoundError:
-        rawText = str(open('data/textLibrary/'+textFile+'.txt', 'r', encoding='latin-1').read())
-        firstFile = open('data/textLibrary/textData/'+textFile+'-firstFile.txt', 'w+')
-        rawText = rawText.replace('\n', ' ')  #  First clean up some meta-bits that inhibit text digestion
-        rawText = rawText.replace('_', " ")
-        rawText = rawText.replace('``', '"')
-        rawText = rawText.replace("''", '"')
-        rawText = rawText.replace('`', "'")
-        rawText = rawText.replace('&', ' and ')
+        print(lineno(), "error reading:", textFile)
+        raw_filepath = 'data/textLibrary/'+textFile+'.txt'
+        output_filepath = 'data/textLibrary/textData/'+textFile+'-firstFile.txt'
+        
+        print(lineno(), "reading:", raw_filepath)
+        print(lineno(), "creating:", output_filepath)
+        
+        rawText = str(open(raw_filepath, 'r', encoding='latin-1').read())
+        firstFile = open(output_filepath, 'w+')
+        
+        def measure_time_taken_to_replace_chars(rawText, char, replacement):
+            start = time.time()
+            print("replacing", char, "with", replacement)
+            #  First clean up some meta-bits that inhibit text digestion
+            rawText = rawText.replace(char, replacement)
+            end = time.time()
+            print("took", end - start)
+            return rawText
+        
+        rawText = measure_time_taken_to_replace_chars(rawText, '\n', ' ')
+        rawText = measure_time_taken_to_replace_chars(rawText, '_', " ")
+        rawText = measure_time_taken_to_replace_chars(rawText, '``', '"')
+        rawText = measure_time_taken_to_replace_chars(rawText, "''", '"')
+        rawText = measure_time_taken_to_replace_chars(rawText, '`', "'")
+        rawText = measure_time_taken_to_replace_chars(rawText, '&', ' and ')
+        
         for all in allPunx:  #  Put a space around punctuation to tokenize later
             rawText = rawText.replace(all, ' '+all+' ')
         rawText = rawText.replace("     ", ' ')  #  Makes 5 whitespace characters shrink into 1 in text

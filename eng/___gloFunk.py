@@ -1,9 +1,13 @@
 from string import *
 import random
 import datetime
+import inspect
 import time
 import csv
 csv.field_size_limit(int(9999999))
+
+def lineno():     ##  Returns the current line number in our program.
+    return inspect.currentframe().f_back.f_lineno
 
 
 ###################
@@ -116,7 +120,7 @@ def dynaDataWriter(dynaList, textFile, dynaType):
         svVal = str()
         for each in val:
             svVal = svVal+'^'
-        dynaFile.writerow([pWord, svVal]) 
+        dynaFile.writerow([pWord, svVal])
     #dynaFile.close()
     return dynaSaurus
 
@@ -130,9 +134,13 @@ def dynaDataOpener(textFile, dynaType):
 
 
 def proxDataOpener(allDics, strBit, textFile):
-    dataFile = csv.reader(open('data/textLibrary/textData/'+textFile+'-'+strBit+'.csv', 'r'))
+    filepath = 'data/textLibrary/textData/'+textFile+'-'+strBit+'.csv'
+    print(lineno(), "proxDataOpener opening:", filepath)
+    dataFile = csv.reader(open(filepath, 'r'))
+    print(lineno(), "proxDataOpener opened:", filepath)
     gpDic = {}
     for line in dataFile:
+        print(line)
         dicInt = int(0)
         dicEntries = line[1].split('~')
         for all in allDics:
@@ -504,7 +512,7 @@ def rhyDictator(superTokens, pWord, maxTotalVs, maxRSyls): # Find rhymes of a pa
                         for all in strikeList:
                             if all in matchBox:
                                 matchBox.remove(all)
-                        strikeList = []                        
+                        strikeList = []
                         for all in matchBox:
                             if all not in finalRhys:
                                 finalRhys.append(all)
